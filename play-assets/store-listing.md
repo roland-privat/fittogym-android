@@ -21,17 +21,18 @@ Play structured .fit running workouts with beeps, BLE heart rate & mini view.
 ## Full description (<= 4000 chars)
 
 ```
-FitToGym turns your planned .fit running workouts into a clear, guided session you can follow on a treadmill, at the gym, or out on the road — completely offline.
+FitToGym turns your planned .fit running workouts into a clear, guided session you can follow on the treadmill or at the gym — completely offline.
 
-Import a structured workout exported from Garmin, TrainingPeaks, or any tool that produces .fit files, and FitToGym lays out every step for you: warm-up, intervals, recovery, and cool-down, each with its target pace or heart-rate zone. When you start the run, audible beeps mark every step transition so you always know when to push and when to ease off — no need to stare at the screen.
+Import a structured workout exported from Garmin, TrainingPeaks, or any tool that produces .fit files, and FitToGym lays out every step for you: warm-up, intervals, recovery, and cool-down, each with its target pace or heart-rate zone. A live timeline always shows exactly where you are in the workout and what's coming next, so you can dial in the right treadmill speed before each interval begins — and audible beeps confirm the moment every step changes, so you never have to stare at the screen.
 
 WHY YOU'LL LIKE IT
 
-• Built for structured training. See the whole workout as a timeline of intervals, with per-step targets and durations.
-• Audible cues. Distinct beeps at each step change keep you on pace while you focus on running.
+• See where you are at a glance. A moving playhead runs across the workout timeline, highlighting your current step and the one coming up next.
+• Set the right speed in advance. Because you can see the next interval and its target before it starts, you have time to adjust the treadmill so you hit the pace right as the step begins.
+• Audible cues too. Distinct beeps at each step change keep you on pace even when you glance away.
 • Optional Bluetooth heart rate. Pair a BLE chest strap or armband to see live HR during the run and your average HR in the summary.
 • Floating mini view. Pop out a small overlay that shows the current step and remaining time while you use other apps — music, podcasts, anything.
-• Runs with the screen off. A foreground timer keeps everything accurate when your phone is in a pocket or armband.
+• Runs with the screen off. A foreground timer keeps everything accurate when your phone is on the treadmill console or in a pocket.
 • Completion summary. Review your session, including average heart rate, when you finish.
 
 PRIVATE BY DESIGN
@@ -53,9 +54,9 @@ HOW IT WORKS
 
 GREAT FOR
 
-• Treadmill and gym sessions where you manually match the target pace.
-• Interval and tempo workouts that are hard to remember by heart.
-• Anyone who plans in Garmin or TrainingPeaks but wants a simple, distraction-free player to actually run them.
+• Treadmill sessions where you manually match the target pace on the machine.
+• Gym interval and tempo workouts that are hard to remember by heart.
+• Anyone who plans in Garmin or TrainingPeaks but wants a simple, distraction-free player to actually run them indoors.
 
 PERMISSIONS
 
@@ -63,7 +64,7 @@ PERMISSIONS
 • Display over other apps — optional, only for the floating mini view.
 • Bluetooth — optional, only to connect a heart-rate monitor (never used for location).
 
-FitToGym is a personal, offline workout player. It is not affiliated with Garmin or TrainingPeaks; it simply reads the standard .fit files those tools produce.
+FitToGym is a personal, offline workout player for indoor running. It is not affiliated with, endorsed by, or sponsored by Garmin or TrainingPeaks; it simply reads the standard .fit files those tools produce. Garmin and TrainingPeaks are trademarks of their respective owners.
 ```
 
 ---

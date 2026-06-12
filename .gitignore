@@ -1,0 +1,34 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android Studio / IntelliJ — none of these are committed for the VS Code-only flow
+.idea/
+*.iml
+captures/
+.cxx/
+
+# SDK location (machine-specific)
+local.properties
+
+# Misc
+*.apk
+*.aab
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Release signing — keystore + passwords are NEVER committed.
+keystore.properties
+*.jks
+*.keystore
+
+# Personal training data (fit files, fitness tests, HR/pace zones) — kept
+# local only, never published.
+TrainingPeaksData/
+
+# NOTE: app/schemas/ is intentionally NOT ignored — the Room schema dumps in
+# there are committed so future DB migrations can be diff-reviewed.

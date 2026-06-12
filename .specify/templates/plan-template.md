@@ -40,7 +40,25 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+For each of the five principles in `.specify/memory/constitution.md`, mark
+**pass** or record an entry in **Complexity Tracking** below.
+
+- **I. Personal Single-User Scope** — does this plan introduce accounts,
+  multi-user data, distribution channels, or any infrastructure that only matters
+  if a second user existed? If yes → violation.
+- **II. Local-First & Privacy by Default** — does this plan add network access,
+  telemetry, analytics, crash reporting, or background sync? If yes → must be
+  justified per principle II (host, payload, why not on-device).
+- **III. Simplicity & YAGNI** — does this plan add a new Gradle module, a new
+  third-party library, or a new abstraction layer? If yes → justify with a
+  concrete second call site or measurable code reduction.
+- **IV. Reproducible Local Build & USB Deploy** — does this plan require a
+  release build variant, signing config, ProGuard/R8 release rules, secrets, or
+  any environment variable beyond `ANDROID_HOME`/JDK? If yes → violation.
+- **V. Hardware Integration Honesty** — if this feature touches the HRM, FIT
+  share/open intents, or fullscreen/keep-screen-on, does the plan include a
+  manual test recipe and explicit graceful-degradation paths for the predictable
+  failure modes? If not → violation.
 
 ## Project Structure
 

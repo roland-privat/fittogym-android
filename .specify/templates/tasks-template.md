@@ -21,10 +21,13 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **This project is a single-module Android app** (per Constitution principle III).
+  Default code path: `app/src/main/java/...` (Kotlin) or `app/src/main/kotlin/...`.
+  Resources: `app/src/main/res/`. Manifest: `app/src/main/AndroidManifest.xml`.
+- Optional unit tests live in `app/src/test/`. Optional instrumented tests live
+  in `app/src/androidTest/`. Manual-test recipes (Constitution principle V) live
+  in `specs/[###-feature-name]/quickstart.md` or `tests/manual/`.
+- Paths shown below assume this Android layout — adjust based on plan.md.
 
 <!--
   ============================================================================

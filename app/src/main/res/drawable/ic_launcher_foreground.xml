@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Foreground for the adaptive launcher icon. 108x108 viewport with a 66x66
+    safe area centered. The four bars echo the workout-timeline visual
+    identity used throughout the app (warmup / interval / interval / cooldown).
+    Single white fill so the same drawable can serve as the monochrome
+    themed-icon variant on Android 13+.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- bar 1: warmup (short) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M28,46 h12 v22 h-12 z" />
+    <!-- bar 2: build -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M44,36 h12 v32 h-12 z" />
+    <!-- bar 3: interval (tallest) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M60,28 h12 v40 h-12 z" />
+    <!-- bar 4: cooldown -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M76,42 h12 v26 h-12 z" />
+
+    <!-- timeline baseline -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M22,72 h70 v3 h-70 z" />
+</vector>

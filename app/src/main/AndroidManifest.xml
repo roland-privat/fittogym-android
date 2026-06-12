@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Permissions intentionally minimal. No INTERNET (FR-034).
+        BLE / overlay permissions are declared per their owning user-story
+        tasks (T075 / T084).
+    -->
+
+    <!-- Foreground service to keep the run session alive while the screen is
+         off or the app is backgrounded (Spec Edge Case "Phone screen turns
+         off during a workout"). Type=specialUse because we're a personal
+         workout timer that doesn't (yet) read body sensors. When US3 lands
+         and BLUETOOTH_CONNECT is granted at runtime, consider switching to
+         connectedDevice. The 'health' type requires sensor permissions we
+         don't need (ACTIVITY_RECOGNITION / BODY_SENSORS / HIGH_SAMPLING_RATE_SENSORS)
+         per Android 14+ rules. Constitution §IV (no Play Store) means
+         specialUse needs no Play review. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Mini view overlay (US4 — Spec FR-028..FR-032). Granted by the user
+         from the system Overlay-permission settings page, not via a runtime
+         dialog. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Broadcast BLE Heart Rate Monitor (US3 — Spec FR-021..FR-027 / FR-033).
+         neverForLocation declares we don't infer location from BLE scans,
+         which lets us skip ACCESS_FINE_LOCATION on Android 12+. The whole
+         feature is optional: a permission-denied path keeps the rest of the
+         app working (FR-033). -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="false" />
+
+    <application
+        android:name=".RunTrainingApp"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.RunTraining"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- ACTION_SEND (share) — accept the three MIME types FIT files
+                 are typically advertised with (see contracts/intent-filters.md §A). -->
+            <intent-filter android:label="@string/share_fit_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.ant.fit" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/x-binary" />
+            </intent-filter>
+
+            <!-- ACTION_VIEW via content:// URI with FIT MIME types (§B) -->
+            <intent-filter android:label="@string/open_fit_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/vnd.ant.fit" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <!-- ACTION_VIEW by file extension (§C). The pathPattern ladder
+                 handles different dot-counts in filenames. -->
+            <intent-filter android:label="@string/open_fit_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.fit" />
+                <data android:pathPattern=".*\\..*\\.fit" />
+                <data android:pathPattern=".*\\..*\\..*\\.fit" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.fit" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <service
+            android:name=".service.WorkoutForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="personal_workout_timer" />
+        </service>
+
+    </application>
+</manifest>

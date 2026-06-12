@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitToGym</string>
+    <string name="share_fit_label">FitToGym (Import workout)</string>
+    <string name="open_fit_label">FitToGym (Open workout)</string>
+</resources>

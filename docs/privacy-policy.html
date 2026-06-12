@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FitToGym — Privacy Policy</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+    color: #1a1a1a;
+    background: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e6e6; background: #121212; }
+    th { background: #1e1e1e !important; }
+    td, th { border-color: #333 !important; }
+    code { background: #1e1e1e; }
+  }
+  h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+  h2 { margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid #ccc; padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
+  th { background: #f4f4f4; }
+  code { background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.9em; }
+  blockquote { border-left: 4px solid #4f86c6; margin: 1rem 0; padding: 0.25rem 1rem; color: inherit; opacity: 0.9; }
+  .updated { opacity: 0.7; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <h1>Privacy Policy — FitToGym</h1>
+  <p class="updated"><strong>Last updated:</strong> 2026-06-11</p>
+
+  <p>This document describes how the <strong>FitToGym</strong> Android app handles your
+  data. The short version: it doesn't collect or transmit anything. The app runs
+  entirely on your device.</p>
+
+  <h2>What we collect</h2>
+  <p><strong>Nothing leaves your device.</strong> The app does not declare the
+  <code>INTERNET</code> permission, which means it is technically incapable of sending
+  any data to us or any third party.</p>
+
+  <p>The following information is stored <em>locally on your device only</em> and is
+  deleted when you uninstall the app:</p>
+
+  <table>
+    <thead>
+      <tr><th>Data</th><th>Where it's stored</th><th>What we do with it</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>.fit</code> workout files you import</td>
+        <td>App-private internal storage (<code>/data/data/com.fittogym.runtraining/files/workouts/</code>)</td>
+        <td>Decoded to display the workout. Never read by any other app.</td>
+      </tr>
+      <tr>
+        <td>Workout metadata (name, planned duration, planned TSS)</td>
+        <td>Local SQLite database (Room)</td>
+        <td>Powers the workout library list.</td>
+      </tr>
+      <tr>
+        <td>Threshold pace, display unit, last paired HRM ID</td>
+        <td>Local DataStore preferences</td>
+        <td>Used to compute TSS and reconnect to your HR monitor.</td>
+      </tr>
+      <tr>
+        <td>Live heart-rate samples while a workout is running</td>
+        <td>RAM only — never persisted</td>
+        <td>Shown on the Run page and averaged for the completion summary. Cleared when the workout ends.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Permissions</h2>
+  <p>The app requests the following permissions, all of which are necessary for the
+  local features described and none of which transmit any data off-device:</p>
+  <ul>
+    <li><strong><code>POST_NOTIFICATIONS</code></strong> — show the workout-in-progress notification.</li>
+    <li><strong><code>FOREGROUND_SERVICE</code></strong> + <strong><code>FOREGROUND_SERVICE_SPECIAL_USE</code></strong> — keep the workout timer running when the screen turns off.</li>
+    <li><strong><code>SYSTEM_ALERT_WINDOW</code></strong> — <em>optional</em>. Used only by the floating "mini view" overlay while a workout is running, so you can see remaining time while you use other apps. If you decline this permission the rest of the app keeps working.</li>
+    <li><strong><code>BLUETOOTH_SCAN</code></strong> (<code>neverForLocation</code>) and <strong><code>BLUETOOTH_CONNECT</code></strong> — <em>optional</em>. Used only to find and stream from a Bluetooth heart-rate monitor. The <code>neverForLocation</code> flag declares that we never infer your location from BLE scans, and Android prevents us from doing so.</li>
+  </ul>
+
+  <h2>Foreground Service — <code>specialUse</code> subtype</h2>
+  <p>The app declares <code>foregroundServiceType="specialUse"</code> with subtype
+  <code>personal_workout_timer</code>. Justification, per Android 14+ requirements:</p>
+  <blockquote>
+    The app is a workout timer with audible beeps that the user needs to hear during a
+    structured run. The session must continue when the screen turns off or another app
+    is in front. None of the more specific FGS types (<code>location</code>,
+    <code>health</code>, <code>connectedDevice</code>) match — we don't track location,
+    don't read body sensors, and the BLE HRM connection is optional and not the reason
+    the service exists.
+  </blockquote>
+
+  <h2>Children</h2>
+  <p>This app is not directed at children. No data is collected from anyone.</p>
+
+  <h2>Contact</h2>
+  <p>For questions about this policy, file an issue on the source repository.</p>
+</body>
+</html>

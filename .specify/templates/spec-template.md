@@ -123,6 +123,13 @@
   ACTION REQUIRED: The content in this section represents placeholders.
   Fill them out with the right assumptions based on reasonable defaults
   chosen when the feature description did not specify certain details.
+
+  Project-wide defaults from the constitution that you can rely on without restating:
+  - Single user (the developer) on a USB-connected Android phone.
+  - No network, telemetry, accounts, or Play Store distribution.
+  - Single Android Gradle module (`app/`), Kotlin + Jetpack Compose.
+  - Manual test recipes are the canonical verification gate for HRM, FIT
+    share/open intents, and fullscreen behavior.
 -->
 
 - [Assumption about target users, e.g., "Users have stable internet connectivity"]

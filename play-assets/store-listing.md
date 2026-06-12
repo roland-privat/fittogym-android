@@ -31,7 +31,7 @@ WHY YOU'LL LIKE IT
 • Set the right speed in advance. Because you can see the next interval and its target before it starts, you have time to adjust the treadmill so you hit the pace right as the step begins.
 • Audible cues too. Distinct beeps at each step change keep you on pace even when you glance away.
 • Optional Bluetooth heart rate. Pair a BLE chest strap or armband to see live HR during the run and your average HR in the summary.
-• Floating mini view. Pop out a small overlay that shows the current step and remaining time while you use other apps — music, podcasts, anything.
+• Floating mini view. Pop out a small overlay that shows the current step and remaining time while you use other apps — video, music, podcasts, anything.
 • Runs with the screen off. A foreground timer keeps everything accurate when your phone is on the treadmill console or in a pocket.
 • Completion summary. Review your session, including average heart rate, when you finish.
 

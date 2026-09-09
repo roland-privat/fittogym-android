@@ -25,12 +25,12 @@ val keystoreProps = Properties().apply {
 
 android {
     namespace = "com.example.runtraining"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.fittogym.runtraining"
         minSdk = 31
-        targetSdk = 35
+        targetSdk = 36
         // versionCode + versionName are read from gradle.properties so a
         // release bump touches a single line.
         versionCode = (project.findProperty("app.versionCode") as String?)?.toInt() ?: 1
@@ -59,6 +59,11 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // Ship native debug symbols in the AAB so Play can symbolicate
+            // native crashes/ANRs.
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

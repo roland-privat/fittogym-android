@@ -90,7 +90,10 @@ fun CompleteScreen(
                     if (s.averageHrBpm != null) {
                         SummaryRow("Avg HR", "${s.averageHrBpm} bpm")
                     }
-                    SummaryRow("TSS", s.plannedTss?.let { String.format("%.0f", it) } ?: "\u2014")
+                    SummaryRow("TSS", s.actualTss?.let { String.format("%.0f", it) } ?: "\u2014")
+                    if (s.wasStoppedEarly && s.plannedTss != null) {
+                        SummaryRow("Planned TSS", String.format("%.0f", s.plannedTss))
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = dismiss) { Text("Done") }

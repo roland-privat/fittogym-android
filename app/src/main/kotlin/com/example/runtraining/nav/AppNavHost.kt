@@ -17,6 +17,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -27,6 +28,8 @@ import com.example.runtraining.ui.complete.CompleteScreen
 import com.example.runtraining.ui.details.DetailsScreen
 import com.example.runtraining.ui.options.OptionsScreen
 import com.example.runtraining.ui.run.RunScreen
+import com.example.runtraining.ui.screens.HistoryDetailScreen
+import com.example.runtraining.ui.screens.HistoryScreen
 import com.example.runtraining.ui.selection.SelectionScreen
 
 /**
@@ -44,6 +47,7 @@ fun AppNavHost(
     /** When non-null, DetailsScreen for this workoutId shows the "fresh import" affordance. */
     freshImportId: Long? = null,
 ) {
+    val container = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.example.runtraining.RunTrainingApp).container
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -53,6 +57,7 @@ fun AppNavHost(
                 onTapWorkout = { id -> navController.navigate(Routes.run(id)) },
                 onOpenDetails = { id -> navController.navigate(Routes.details(id)) },
                 onOpenOptions = { navController.navigate(Routes.OPTIONS) },
+                onOpenHistory = { navController.navigate(Routes.HISTORY) },
             )
         }
         composable(
@@ -105,6 +110,31 @@ fun AppNavHost(
                     popUpTo(Routes.SELECTION) { inclusive = true }
                 }
             })
+        }
+        composable(Routes.HISTORY) {
+            HistoryScreen(
+                repository = container.workoutResultRepository,
+                onBack = { navController.popBackStack() },
+                onShowDetail = { resultId ->
+                    navController.navigate(Routes.historyDetail(resultId))
+                },
+            )
+        }
+        composable(
+            route = Routes.HISTORY_DETAIL,
+            arguments = listOf(navArgument(Routes.ARG_RESULT_ID) { type = NavType.LongType }),
+        ) { entry ->
+            val resultId = entry.arguments?.getLong(Routes.ARG_RESULT_ID) ?: 0L
+            HistoryDetailScreen(
+                resultId = resultId,
+                repository = container.workoutResultRepository,
+                onBack = { navController.popBackStack() },
+                onRepeatWorkout = { workoutId ->
+                    navController.navigate(Routes.run(workoutId)) {
+                        popUpTo(Routes.SELECTION)
+                    }
+                },
+            )
         }
     }
 }

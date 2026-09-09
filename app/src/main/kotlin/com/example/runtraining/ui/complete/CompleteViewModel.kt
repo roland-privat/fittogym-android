@@ -69,6 +69,7 @@ class CompleteViewModel(
                     actualElapsedSec = w.plannedDurationSec,
                     averageHrBpm = null,
                     plannedTss = w.tss,
+                    actualTss = w.tss,
                     wasStoppedEarly = stoppedEarlyArg,
                 )
             }

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.example.runtraining.ble.HrmClient
 import com.example.runtraining.persistence.WorkoutRepository
+import com.example.runtraining.persistence.WorkoutResultRepository
 import com.example.runtraining.persistence.db.RunTrainingDatabase
 import com.example.runtraining.persistence.files.WorkoutBlobStore
 import com.example.runtraining.settings.AppSettingsRepository
@@ -21,6 +22,7 @@ class AppContainer(context: Context) {
     val blobStore: WorkoutBlobStore by lazy { WorkoutBlobStore(appCtx) }
     val settings: AppSettingsRepository by lazy { AppSettingsRepository(appCtx) }
     val workoutRepository: WorkoutRepository by lazy { WorkoutRepository(database, blobStore) }
+    val workoutResultRepository: WorkoutResultRepository by lazy { WorkoutResultRepository(database.workoutResultDao()) }
     val hrmClient: HrmClient by lazy { HrmClient(appCtx) }
 
     fun importUseCase(): ImportWorkoutUseCase = ImportWorkoutUseCase(

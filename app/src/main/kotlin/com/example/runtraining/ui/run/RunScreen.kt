@@ -116,10 +116,18 @@ fun RunScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    BackHandler { onBack() }
-
     // Stop confirmation dialog.
     var stopConfirmVisible by remember { mutableStateOf(false) }
+
+    // Leaving mid-workout would silently abandon a running/paused session, so
+    // intercept Back (arrow + system) and route it to the Stop confirmation.
+    // Before the workout starts (IDLE) Back just leaves.
+    val isWorkoutActive = state?.state == RunState.RUNNING || state?.state == RunState.PAUSED
+    val handleBack: () -> Unit = {
+        if (isWorkoutActive) stopConfirmVisible = true else onBack()
+    }
+
+    BackHandler { handleBack() }
 
     // Mini view permission flow (Spec FR-029).
     var rationaleVisible by remember { mutableStateOf(false) }
@@ -154,7 +162,7 @@ fun RunScreen(
             TopAppBar(
                 title = { Text(state?.workoutDisplayName ?: "Workout run") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = handleBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

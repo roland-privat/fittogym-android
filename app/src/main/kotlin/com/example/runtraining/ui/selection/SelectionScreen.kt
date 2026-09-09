@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -55,6 +56,7 @@ fun SelectionScreen(
     onTapWorkout: (Long) -> Unit,
     onOpenDetails: (Long) -> Unit,
     onOpenOptions: () -> Unit,
+    onOpenHistory: () -> Unit,
     viewModel: SelectionViewModel = viewModel(factory = SelectionViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -67,6 +69,9 @@ fun SelectionScreen(
             TopAppBar(
                 title = { Text("Workouts") },
                 actions = {
+                    IconButton(onClick = onOpenHistory) {
+                        Icon(Icons.Filled.History, contentDescription = "History")
+                    }
                     IconButton(onClick = onOpenOptions) {
                         Icon(Icons.Filled.Settings, contentDescription = "Options")
                     }

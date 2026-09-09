@@ -9,6 +9,7 @@ import com.example.runtraining.workout.model.Intensity
 import com.example.runtraining.workout.model.Step
 import com.example.runtraining.workout.model.Target
 import com.example.runtraining.workout.model.Workout
+import com.example.runtraining.workout.tss.TssCalculator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +49,9 @@ class RunSessionEngine(
     private var workout: Workout? = null
     private var displayUnit: DisplayUnit = DisplayUnit.PACE
 
+    /** Threshold pace (sec/km) used to compute actual (performed) TSS. Null → TSS "—". */
+    private var thresholdPaceSecPerKm: Int? = null
+
     // FSM bookkeeping
     private var state: RunState = RunState.IDLE
     private var currentStepIndex: Int = 1                      // 1-based
@@ -80,6 +84,11 @@ class RunSessionEngine(
     fun setDisplayUnit(unit: DisplayUnit) {
         displayUnit = unit
         emit()
+    }
+
+    /** Set the threshold pace (sec/km) used to compute actual TSS in the summary. */
+    fun setThresholdPace(secPerKm: Int?) {
+        thresholdPaceSecPerKm = secPerKm
     }
 
     fun load(workout: Workout) {
@@ -476,6 +485,8 @@ class RunSessionEngine(
         val actualElapsedSec: Int,
         val averageHrBpm: Int?,         // null when not eligible (< 50% of session)
         val plannedTss: Double?,
+        /** Actual (performed) TSS for the elapsed portion. Null when threshold pace unset. */
+        val actualTss: Double?,
         /** True when the user pressed Stop before the final step's timer reached zero. */
         val wasStoppedEarly: Boolean,
     )
@@ -498,7 +509,18 @@ class RunSessionEngine(
             actualElapsedSec = actualSec,
             averageHrBpm = avgHr,
             plannedTss = w.tss,
+            actualTss = TssCalculator.computeElapsed(w, thresholdPaceSecPerKm, actualSec),
             wasStoppedEarly = wasStoppedEarly,
         )
+    }
+
+    /**
+     * Get the workout ID and completion summary for saving to history.
+     * Returns null if the workout is not loaded or not completed.
+     */
+    fun getResultForSaving(): Pair<Long, CompletionSummary>? {
+        val w = workout ?: return null
+        val summary = buildCompletionSummary() ?: return null
+        return Pair(w.id, summary)
     }
 }

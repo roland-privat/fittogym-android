@@ -64,20 +64,42 @@ fun TimelineChart(
             xCursor += rectWidth
         }
 
-        val playX = playheadFraction.coerceIn(0f, 1f) * w
-        val playWidth = 3.dp.toPx()
         if (showPlayhead) {
+            val cx = playheadFraction.coerceIn(0f, 1f) * w
+            val lineW = 3.5.dp.toPx()
+            val outlineW = lineW + 2.dp.toPx()
+            val knobR = 5.dp.toPx()
+            val knobOutlineR = knobR + 1.5.dp.toPx()
+
+            // Dark outline first, so the marker reads on bright bars as well
+            // as the dark background.
+            drawRoundRect(
+                color = playheadOutline,
+                topLeft = Offset(cx - outlineW / 2f, 0f),
+                size = Size(width = outlineW, height = h),
+                cornerRadius = CornerRadius(outlineW / 2f, outlineW / 2f),
+            )
+            // Bright "you are here" line.
             drawRoundRect(
                 color = playheadColor,
-                topLeft = Offset(playX - playWidth / 2f, 0f),
-                size = Size(width = playWidth, height = h),
-                cornerRadius = CornerRadius(playWidth / 2f, playWidth / 2f),
+                topLeft = Offset(cx - lineW / 2f, 0f),
+                size = Size(width = lineW, height = h),
+                cornerRadius = CornerRadius(lineW / 2f, lineW / 2f),
             )
+            // Knob at the top: an unmistakable position handle, placed where
+            // the bars are shortest and contrast was previously worst.
+            drawCircle(color = playheadOutline, radius = knobOutlineR, center = Offset(cx, knobR))
+            drawCircle(color = playheadColor, radius = knobR, center = Offset(cx, knobR))
         }
     }
 }
 
-private val playheadColor = Color(0xFF0D1B2A)
+// Vivid amber: complementary to the blue bars and bright against the dark
+// background, so the playhead stays visible at the start of every step.
+private val playheadColor = Color(0xFFFFC400)
+
+// Translucent dark outline that lifts the playhead off the lighter bars.
+private val playheadOutline = Color(0x99000000)
 
 private fun accentColor(base: Color): Color = Color(
     red = (base.red * 0.55f).coerceIn(0f, 1f),

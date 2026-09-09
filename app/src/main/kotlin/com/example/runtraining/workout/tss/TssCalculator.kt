@@ -40,6 +40,67 @@ object TssCalculator {
         return Math.round(total * 10.0) / 10.0
     }
 
+    /**
+     * Actual (performed) rTSS for a session that ran for [elapsedSec] seconds,
+     * integrating the planned per-step intensity over the runtime timeline in
+     * execution order (repeat blocks unrolled) and prorating the step that was
+     * in progress when the session ended.
+     *
+     * Because this app has no pace/GPS sensor, "actual" means the planned TSS of
+     * the portion of the plan the user actually completed — so stopping early
+     * yields a smaller value than the full planned TSS, and a natural finish
+     * reproduces the full planned TSS.
+     *
+     * `threshold == null` (unset in Options) → returns null (UI renders "—").
+     */
+    fun computeElapsed(workout: Workout, thresholdPaceSecPerKm: Int?, elapsedSec: Int): Double? {
+        if (thresholdPaceSecPerKm == null || thresholdPaceSecPerKm <= 0) return null
+        if (elapsedSec <= 0) return 0.0
+
+        var remaining = elapsedSec
+        var total = 0.0
+        for (seg in runtimeTimeline(workout)) {
+            if (remaining <= 0) break
+            val dur = seg.effectiveDurationSec ?: 0
+            if (dur <= 0) continue
+            val used = minOf(dur, remaining)
+            val pace = (seg.target as? Target.Pace)?.midpointSecPerKm
+            if (pace != null && pace > 0) {
+                val intensityFactor = thresholdPaceSecPerKm.toDouble() / pace.toDouble()
+                total += (used * intensityFactor * intensityFactor) / 36.0
+            }
+            remaining -= used
+        }
+        return Math.round(total * 10.0) / 10.0
+    }
+
+    /**
+     * Flattens a workout into the ordered list of steps as they are actually
+     * executed: repeat-group members are contiguous and the whole block is
+     * emitted `iterationCount` times, matching the engine's traversal.
+     */
+    private fun runtimeTimeline(workout: Workout): List<com.example.runtraining.workout.model.Step> {
+        val steps = workout.steps
+        val result = ArrayList<com.example.runtraining.workout.model.Step>(steps.size)
+        var i = 0
+        while (i < steps.size) {
+            val groupId = steps[i].inRepeat?.repeatGroupId
+            if (groupId != null) {
+                var j = i
+                val members = ArrayList<com.example.runtraining.workout.model.Step>()
+                while (j < steps.size && steps[j].inRepeat?.repeatGroupId == groupId) {
+                    members.add(steps[j]); j++
+                }
+                val iterations = workout.repeatGroups.firstOrNull { it.id == groupId }?.iterationCount ?: 1
+                repeat(iterations) { result.addAll(members) }
+                i = j
+            } else {
+                result.add(steps[i]); i++
+            }
+        }
+        return result
+    }
+
     // Provided for legacy/no-domain call sites (not used in v1).
     @Suppress("unused")
     fun computeBySourceDuration(

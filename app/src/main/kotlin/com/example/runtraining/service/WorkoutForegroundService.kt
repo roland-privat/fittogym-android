@@ -94,6 +94,15 @@ class WorkoutForegroundService : LifecycleService() {
     private var currentWorkoutId: Long = -1L
     private var foregroundStarted = false
 
+    // True once the engine has entered RUNNING in this foreground session, so
+    // we only leave foreground on a real return-to-IDLE (not on priming).
+    private var runHasStarted = false
+
+    // Last content posted to the ongoing notification, so we skip redundant
+    // nm.notify() calls (the engine emits ~4 Hz; the text changes ~1 Hz).
+    private var lastNotifiedTitle: String? = null
+    private var lastNotifiedText: String? = null
+
     override fun onCreate() {
         super.onCreate()
         NotificationBuilder.ensureChannel(this)
@@ -145,27 +154,66 @@ class WorkoutForegroundService : LifecycleService() {
             var alreadyMarkedComplete = false
             engine.uiState.collectLatest { state ->
                 if (!foregroundStarted) return@collectLatest
-                if (state.state == RunState.COMPLETE && !alreadyMarkedComplete && currentWorkoutId > 0L) {
-                    // Only stamp as completed on natural finish, not early stop.
-                    alreadyMarkedComplete = true
-                    if (!state.wasStoppedEarly) {
-                        container.workoutRepository.markCompleted(currentWorkoutId)
+                if (state.state == RunState.COMPLETE) {
+                    if (!alreadyMarkedComplete && currentWorkoutId > 0L) {
+                        alreadyMarkedComplete = true
+                        // Save the result to history regardless of whether stopped early or natural completion
+                        val result = engine.getResultForSaving()
+                        if (result != null) {
+                            val (workoutId, summary) = result
+                            container.workoutResultRepository.save(
+                                workoutId = workoutId,
+                                plannedDurationSec = summary.plannedDurationSec,
+                                actualDurationSec = summary.actualElapsedSec,
+                                averageHrBpm = summary.averageHrBpm,
+                                wasStoppedEarly = summary.wasStoppedEarly,
+                                tss = summary.actualTss,
+                                workoutDisplayName = summary.workoutDisplayName,
+                            )
+                        }
+                        // Also mark completed on the workout record if finished naturally
+                        if (!state.wasStoppedEarly) {
+                            container.workoutRepository.markCompleted(currentWorkoutId)
+                        }
                     }
-                }
-                if (state.state == RunState.IDLE) {
-                    alreadyMarkedComplete = false
-                    // Engine returned to IDLE — leave foreground.
+                    // Workout finished (naturally or via Stop) — it is no longer
+                    // running in the background, so remove the notification and
+                    // leave foreground. The service stays alive (bound) so the
+                    // summary can still be read; ACTION_RESET stops it later.
+                    runHasStarted = false
                     stopForegroundAndSelf()
                     return@collectLatest
                 }
+                if (state.state == RunState.IDLE) {
+                    alreadyMarkedComplete = false
+                    // A freshly PRIMED workout is also IDLE (same as one that
+                    // finished/reset). Only leave foreground if a run actually
+                    // started — otherwise priming would tear the notification
+                    // down for the whole session (the "no notification" bug).
+                    if (runHasStarted) {
+                        runHasStarted = false
+                        stopForegroundAndSelf()
+                    }
+                    return@collectLatest
+                }
+                if (state.state == RunState.RUNNING) runHasStarted = true
+                // The engine emits at ~4 Hz but the visible text only changes
+                // ~1 Hz. Posting every emission floods NotificationManager's
+                // per-package enqueue rate limiter, which sheds updates and
+                // leaves the shade showing a stale step. Only re-post on change.
+                val title = state.workoutDisplayName
+                val text = NotificationBuilder.contentTextFor(
+                    stepIndex = state.currentStepIndex,
+                    stepsTotal = state.totalAuthoredSteps,
+                    stepRemainingSec = state.stepRemainingSec,
+                )
+                if (title == lastNotifiedTitle && text == lastNotifiedText) return@collectLatest
+                lastNotifiedTitle = title
+                lastNotifiedText = text
                 val notif = NotificationBuilder.build(
                     context = this@WorkoutForegroundService,
-                    contentTitle = state.workoutDisplayName,
-                    contentText = NotificationBuilder.contentTextFor(
-                        stepIndex = state.currentStepIndex,
-                        stepsTotal = state.totalAuthoredSteps,
-                        stepRemainingSec = state.stepRemainingSec,
-                    ),
+                    contentTitle = title,
+                    contentText = text,
                     workoutId = currentWorkoutId,
                 )
                 val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
@@ -193,6 +241,16 @@ class WorkoutForegroundService : LifecycleService() {
         return binder
     }
 
+    override fun onUnbind(intent: Intent?): Boolean {
+        // If the user left the Run page before starting (still IDLE), there is
+        // no session to keep alive — stop the service so it doesn't linger.
+        if (engine.uiState.value.state == RunState.IDLE) {
+            stopForegroundAndSelf()
+            stopSelf()
+        }
+        return super.onUnbind(intent)
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
@@ -202,11 +260,13 @@ class WorkoutForegroundService : LifecycleService() {
                     currentWorkoutId = workoutId
                     primeWorkout(workoutId)
                 }
-                // Promote to foreground even before Start, so the screen-off
-                // edge case is covered as soon as the user enters the Run page.
-                if (!foregroundStarted) startForegroundForCurrentWorkout()
+                // No foreground/notification until the workout actually runs —
+                // the notification exists only to keep a running workout alive.
             }
-            ACTION_START -> engine.start()
+            ACTION_START -> {
+                if (!foregroundStarted) startForegroundForCurrentWorkout()
+                engine.start()
+            }
             ACTION_PAUSE -> engine.pause()
             ACTION_STOP -> {
                 engine.stop()
@@ -230,6 +290,7 @@ class WorkoutForegroundService : LifecycleService() {
         val container = (application as RunTrainingApp).container
         lifecycleScope.launch {
             val w = container.workoutRepository.get(workoutId) ?: return@launch
+            engine.setThresholdPace(container.settings.settings.first().thresholdPaceSecPerKm)
             engine.load(w)
         }
     }
@@ -241,6 +302,11 @@ class WorkoutForegroundService : LifecycleService() {
             contentText = "Tap to open",
             workoutId = currentWorkoutId,
         )
+        // Force the next engine emission to post, even if it happens to match
+        // the previous session's last text.
+        lastNotifiedTitle = null
+        lastNotifiedText = null
+        runHasStarted = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 NotificationBuilder.NOTIFICATION_ID,

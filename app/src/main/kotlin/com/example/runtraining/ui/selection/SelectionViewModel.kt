@@ -1,5 +1,6 @@
 package com.example.runtraining.ui.selection
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,6 +11,8 @@ import com.example.runtraining.persistence.WorkoutRepository
 import com.example.runtraining.persistence.WorkoutResultRepository
 import com.example.runtraining.settings.AppSettings
 import com.example.runtraining.settings.AppSettingsRepository
+import com.example.runtraining.workout.fit.RejectReason
+import com.example.runtraining.workout.import.ImportWorkoutUseCase
 import com.example.runtraining.workout.model.Workout
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,10 +41,18 @@ data class SelectionUiState(
     val lastRunEpochMs: Long? = null,
 )
 
+/** Result of an in-app file-picker import. */
+sealed interface ImportOutcome {
+    data class Added(val workoutId: Long) : ImportOutcome
+    data class AlreadyThere(val workoutId: Long) : ImportOutcome
+    data class Failed(val message: String) : ImportOutcome
+}
+
 class SelectionViewModel(
     private val repo: WorkoutRepository,
     private val settings: AppSettingsRepository,
     private val results: WorkoutResultRepository,
+    private val importer: ImportWorkoutUseCase,
 ) : ViewModel() {
 
     private val _sortOrder = MutableStateFlow(SortOrder.LAST_ADDED)
@@ -69,6 +80,26 @@ class SelectionViewModel(
         _sortOrder.value = order
     }
 
+    /** Import a `.fit` picked via the system file picker; result on main thread. */
+    fun import(uri: Uri, onResult: (ImportOutcome) -> Unit) {
+        viewModelScope.launch {
+            val outcome = when (val r = importer.invoke(uri)) {
+                is ImportWorkoutUseCase.Result.NewImport -> ImportOutcome.Added(r.workoutId)
+                is ImportWorkoutUseCase.Result.AlreadyImported -> ImportOutcome.AlreadyThere(r.workoutId)
+                is ImportWorkoutUseCase.Result.Rejected -> ImportOutcome.Failed(humanReason(r.reason))
+            }
+            onResult(outcome)
+        }
+    }
+
+    private fun humanReason(reason: RejectReason): String = when (reason) {
+        RejectReason.NOT_A_FIT_FILE -> "That doesn't look like a FIT file."
+        RejectReason.NOT_A_WORKOUT_FILE -> "That's a FIT file but not a workout."
+        RejectReason.NOT_RUNNING -> "Only running workouts are supported."
+        RejectReason.NO_STEPS -> "This workout has no steps."
+        RejectReason.MALFORMED -> "Couldn't read this workout file."
+    }
+
     fun delete(workoutId: Long) {
         viewModelScope.launch { repo.delete(workoutId) }
     }
@@ -77,7 +108,12 @@ class SelectionViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as RunTrainingApp
-                SelectionViewModel(app.container.workoutRepository, app.container.settings, app.container.workoutResultRepository)
+                SelectionViewModel(
+                    app.container.workoutRepository,
+                    app.container.settings,
+                    app.container.workoutResultRepository,
+                    app.container.importUseCase(),
+                )
             }
         }
     }

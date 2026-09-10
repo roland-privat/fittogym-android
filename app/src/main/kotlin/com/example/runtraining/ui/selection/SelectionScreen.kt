@@ -1,6 +1,8 @@
 package com.example.runtraining.ui.selection
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -27,6 +30,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,6 +70,24 @@ fun SelectionScreen(
     var workoutPendingDeletion by remember { mutableStateOf<Workout?>(null) }
     val context = LocalContext.current
 
+    // In-app import: pick a file, run it through the same import pipeline as
+    // the share/open intents. "*/*" because .fit often reports octet-stream.
+    val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            viewModel.import(uri) { outcome ->
+                when (outcome) {
+                    is ImportOutcome.Added -> onOpenDetails(outcome.workoutId)
+                    is ImportOutcome.AlreadyThere -> {
+                        Toast.makeText(context, "Already in your library.", Toast.LENGTH_SHORT).show()
+                        onOpenDetails(outcome.workoutId)
+                    }
+                    is ImportOutcome.Failed ->
+                        Toast.makeText(context, outcome.message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,6 +110,11 @@ fun SelectionScreen(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { importPicker.launch(arrayOf("*/*")) }) {
+                Icon(Icons.Filled.Add, contentDescription = "Import .fit workout")
+            }
         },
     ) { padding ->
         if (state.workouts.isEmpty()) {
@@ -258,7 +285,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
-            text = "Share a .fit file from another app, or open one from a file manager.",
+            text = "Tap + to pick a .fit file, or share one to FitToGym from another app.",
             style = MaterialTheme.typography.bodyLarge,
         )
     }

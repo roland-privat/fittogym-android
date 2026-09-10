@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
@@ -46,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.runtraining.ui.common.BrandMark
 import com.example.runtraining.ui.run.TimelineChart
 import com.example.runtraining.util.Format
 import com.example.runtraining.workout.model.Workout
@@ -67,7 +69,16 @@ fun SelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Workouts") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        BrandMark(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("FitToGym", fontWeight = FontWeight.Bold)
+                    }
+                },
                 actions = {
                     IconButton(onClick = onOpenHistory) {
                         Icon(Icons.Filled.History, contentDescription = "History")
@@ -83,6 +94,7 @@ fun SelectionScreen(
             EmptyState(modifier = Modifier.padding(padding))
         } else {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                SummaryHeader(state = state)
                 SortChipRow(
                     selected = state.sortOrder,
                     onSelect = viewModel::setSortOrder,
@@ -132,6 +144,31 @@ fun SelectionScreen(
                 TextButton(onClick = { workoutPendingDeletion = null }) { Text("Cancel") }
             },
         )
+    }
+}
+
+@Composable
+private fun SummaryHeader(state: SelectionUiState) {
+    val count = state.workouts.size
+    val parts = buildList {
+        add("$count ${if (count == 1) "workout" else "workouts"}")
+        if (state.weeklyTss > 0) add("${state.weeklyTss} TSS this week")
+        add(state.lastRunEpochMs?.let { "last run ${relativeDays(it)}" } ?: "no runs yet")
+    }
+    Text(
+        text = parts.joinToString("  \u00b7  "),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+}
+
+private fun relativeDays(epochMs: Long): String {
+    val days = ((System.currentTimeMillis() - epochMs) / (24L * 60 * 60 * 1000)).toInt()
+    return when {
+        days <= 0 -> "today"
+        days == 1 -> "yesterday"
+        else -> "$days days ago"
     }
 }
 

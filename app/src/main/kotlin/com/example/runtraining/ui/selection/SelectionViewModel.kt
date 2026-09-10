@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.runtraining.RunTrainingApp
 import com.example.runtraining.persistence.WorkoutRepository
+import com.example.runtraining.persistence.WorkoutResultRepository
 import com.example.runtraining.settings.AppSettings
 import com.example.runtraining.settings.AppSettingsRepository
 import com.example.runtraining.workout.model.Workout
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 enum class SortOrder(val label: String) {
     /** Default per Spec FR-010. */
@@ -30,21 +32,32 @@ data class SelectionUiState(
     val workouts: List<Workout> = emptyList(),
     val settings: AppSettings = AppSettings.DEFAULT,
     val sortOrder: SortOrder = SortOrder.LAST_ADDED,
+    /** Sum of performed TSS over the last 7 days. */
+    val weeklyTss: Int = 0,
+    /** Most recent completed/stopped session, or null if none yet. */
+    val lastRunEpochMs: Long? = null,
 )
 
 class SelectionViewModel(
     private val repo: WorkoutRepository,
     private val settings: AppSettingsRepository,
+    private val results: WorkoutResultRepository,
 ) : ViewModel() {
 
     private val _sortOrder = MutableStateFlow(SortOrder.LAST_ADDED)
 
     val uiState: StateFlow<SelectionUiState> =
-        combine(repo.observeAll(), settings.settings, _sortOrder) { workouts, s, order ->
+        combine(repo.observeAll(), settings.settings, _sortOrder, results.getAllResults()) { workouts, s, order, allResults ->
+            val weekAgoMs = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+            val weeklyTss = allResults
+                .filter { it.completedAtEpochMs >= weekAgoMs }
+                .sumOf { it.tss ?: 0.0 }
             SelectionUiState(
                 workouts = workouts.sortedWith(order.comparator),
                 settings = s,
                 sortOrder = order,
+                weeklyTss = weeklyTss.roundToInt(),
+                lastRunEpochMs = allResults.maxOfOrNull { it.completedAtEpochMs },
             )
         }.stateIn(
             scope = viewModelScope,
@@ -64,7 +77,7 @@ class SelectionViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as RunTrainingApp
-                SelectionViewModel(app.container.workoutRepository, app.container.settings)
+                SelectionViewModel(app.container.workoutRepository, app.container.settings, app.container.workoutResultRepository)
             }
         }
     }

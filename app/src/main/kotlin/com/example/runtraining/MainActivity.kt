@@ -30,12 +30,14 @@ import androidx.navigation.compose.rememberNavController
 import com.example.runtraining.nav.AppNavHost
 import com.example.runtraining.nav.Routes
 import com.example.runtraining.ui.theme.RunTrainingTheme
+import com.example.runtraining.ui.splash.SplashScreen
 import com.example.runtraining.util.Log
 import com.example.runtraining.workout.fit.RejectReason
 import com.example.runtraining.workout.import.ImportWorkoutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -99,6 +101,12 @@ class MainActivity : ComponentActivity() {
             RunTrainingTheme {
                 val state by importBootState.collectAsState()
                 val snackbarHostState = remember { SnackbarHostState() }
+                // Branded launch screen on cold (non-import) starts only.
+                var showSplash by remember { mutableStateOf(!hasFitIntent) }
+                LaunchedEffect(Unit) {
+                    if (!hasFitIntent) delay(2000)
+                    showSplash = false
+                }
 
                 LaunchedEffect(state.errorMessage) {
                     val msg = state.errorMessage
@@ -112,12 +120,12 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                         val dest = state.startDestination
-                        if (dest == null) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        when {
+                            showSplash -> SplashScreen()
+                            dest == null -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator()
                             }
-                        } else {
-                            AppNavHost(
+                            else -> AppNavHost(
                                 navController = navController,
                                 startDestination = dest,
                                 freshImportId = state.freshImportId,

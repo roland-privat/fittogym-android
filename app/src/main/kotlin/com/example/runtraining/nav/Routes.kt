@@ -5,6 +5,7 @@ package com.example.runtraining.nav
  * call sites stay in sync.
  */
 object Routes {
+    const val ONBOARDING = "onboarding"
     const val SELECTION = "selection"
     const val DETAILS = "details/{workoutId}"
     const val RUN = "run/{workoutId}"

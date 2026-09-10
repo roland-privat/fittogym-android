@@ -14,12 +14,15 @@ data class AppSettings(
     val displayUnit: DisplayUnit,
     /** Null → no HRM has ever been paired. */
     val lastPairedDeviceId: String?,
+    /** False until the first-run tour is finished. */
+    val onboardingComplete: Boolean = false,
 ) {
     companion object {
         val DEFAULT = AppSettings(
             thresholdPaceSecPerKm = null,
             displayUnit = DisplayUnit.PACE,
             lastPairedDeviceId = null,
+            onboardingComplete = false,
         )
     }
 }

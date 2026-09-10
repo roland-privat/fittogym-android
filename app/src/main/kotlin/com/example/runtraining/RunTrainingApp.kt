@@ -31,6 +31,23 @@ class AppContainer(context: Context) {
         repository = workoutRepository,
         settings = settings,
     )
+
+    /**
+     * On first run, import the bundled demo `.fit` workouts from assets so the
+     * library isn't empty. Idempotent: gated by a flag and dedup-safe.
+     */
+    suspend fun seedDemoWorkoutsIfNeeded() {
+        if (settings.isDemosSeeded()) return
+        val importer = importUseCase()
+        val dir = "demo-workouts"
+        val names = runCatching { appCtx.assets.list(dir) }.getOrNull()
+            ?.filter { it.endsWith(".fit") }?.sorted().orEmpty()
+        for (name in names) {
+            val bytes = runCatching { appCtx.assets.open("$dir/$name").use { it.readBytes() } }.getOrNull() ?: continue
+            runCatching { importer.importBytes(bytes, name) }
+        }
+        settings.markDemosSeeded()
+    }
 }
 
 class RunTrainingApp : Application() {

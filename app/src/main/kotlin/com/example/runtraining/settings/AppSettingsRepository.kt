@@ -3,11 +3,13 @@ package com.example.runtraining.settings
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.appSettingsDataStore: DataStore<Preferences> by preferencesDataStore(
@@ -29,6 +31,7 @@ class AppSettingsRepository(context: Context) {
                 ?.let { runCatching { DisplayUnit.valueOf(it) }.getOrDefault(DisplayUnit.PACE) }
                 ?: DisplayUnit.PACE,
             lastPairedDeviceId = prefs[Keys.LAST_PAIRED_DEVICE_ID],
+            onboardingComplete = prefs[Keys.ONBOARDING_COMPLETE] ?: false,
         )
     }
 
@@ -50,9 +53,22 @@ class AppSettingsRepository(context: Context) {
         }
     }
 
+    suspend fun setOnboardingComplete(done: Boolean) {
+        store.edit { prefs -> prefs[Keys.ONBOARDING_COMPLETE] = done }
+    }
+
+    /** One-shot read: have the bundled demo workouts been seeded yet? */
+    suspend fun isDemosSeeded(): Boolean = store.data.first()[Keys.DEMOS_SEEDED] ?: false
+
+    suspend fun markDemosSeeded() {
+        store.edit { prefs -> prefs[Keys.DEMOS_SEEDED] = true }
+    }
+
     private object Keys {
         val THRESHOLD_PACE = intPreferencesKey("threshold_pace_sec_per_km")
         val DISPLAY_UNIT = stringPreferencesKey("display_unit")
         val LAST_PAIRED_DEVICE_ID = stringPreferencesKey("last_paired_device_id")
+        val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val DEMOS_SEEDED = booleanPreferencesKey("demos_seeded")
     }
 }

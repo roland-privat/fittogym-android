@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -33,6 +34,7 @@ import com.example.runtraining.util.Log
 import com.example.runtraining.workout.fit.RejectReason
 import com.example.runtraining.workout.import.ImportWorkoutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -62,7 +64,25 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val hasFitIntent = extractFitUri(intent) != null
         handleIntent(intent)
+
+        // First-run: seed the bundled demo workouts, then route cold launches
+        // to the onboarding tour until it has been completed.
+        lifecycleScope.launch {
+            val container = (application as RunTrainingApp).container
+            container.seedDemoWorkoutsIfNeeded()
+            if (!hasFitIntent) {
+                val onboarded = container.settings.settings.first().onboardingComplete
+                importBootState.update { s ->
+                    if (s.startDestination == null) {
+                        s.copy(startDestination = if (onboarded) Routes.SELECTION else Routes.ONBOARDING)
+                    } else {
+                        s
+                    }
+                }
+            }
+        }
 
         // Request POST_NOTIFICATIONS permission on Android 13+ (required for foreground service notification)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -91,11 +111,18 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-                        AppNavHost(
-                            navController = navController,
-                            startDestination = state.startDestination,
-                            freshImportId = state.freshImportId,
-                        )
+                        val dest = state.startDestination
+                        if (dest == null) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        } else {
+                            AppNavHost(
+                                navController = navController,
+                                startDestination = dest,
+                                freshImportId = state.freshImportId,
+                            )
+                        }
                         SnackbarHost(
                             hostState = snackbarHostState,
                             modifier = Modifier.fillMaxSize(),
@@ -186,7 +213,7 @@ class MainActivity : ComponentActivity() {
 
 /** Boot-time state shared between intent dispatch and Compose. */
 private data class ImportBootState(
-    val startDestination: String = Routes.SELECTION,
+    val startDestination: String? = null,
     val freshImportId: Long? = null,
     val errorMessage: String? = null,
 )

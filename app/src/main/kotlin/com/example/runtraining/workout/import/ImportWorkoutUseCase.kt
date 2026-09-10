@@ -42,11 +42,20 @@ class ImportWorkoutUseCase(
             Log.w("Import: failed to read URI $uri", t)
             return Result.Rejected(RejectReason.MALFORMED, t.message)
         }
+        val originalFilename = resolveFilename(uri) ?: "workout.fit"
+        return importBytes(bytes, originalFilename)
+    }
+
+    /**
+     * Import raw `.fit` bytes (e.g. a bundled demo asset) through the same
+     * dedupe → decode → TSS → persist pipeline as the URI path.
+     */
+    suspend fun importBytes(bytes: ByteArray, originalFilename: String): Result {
         if (bytes.isEmpty()) {
             return Result.Rejected(RejectReason.MALFORMED, "empty payload")
         }
 
-        // 2) Hash + dedupe.
+        // Hash + dedupe.
         val hash = blobStore.sha256(bytes)
         val existingId = repository.findByHash(hash)
         if (existingId != null) {
@@ -54,7 +63,7 @@ class ImportWorkoutUseCase(
             return Result.AlreadyImported(existingId)
         }
 
-        // 3) Decode.
+        // Decode.
         val decoded = when (val r = FitDecoder.decode(bytes)) {
             is FitDecodeResult.Ok -> r.workout
             is FitDecodeResult.Rejected -> {
@@ -63,22 +72,19 @@ class ImportWorkoutUseCase(
             }
         }
 
-        // 4) Filename: prefer DocumentsContract DISPLAY_NAME, fall back to URI lastPathSegment.
-        val originalFilename = resolveFilename(uri) ?: "workout.fit"
-
-        // 5) Map to domain (effective durations, totals, default name).
+        // Map to domain (effective durations, totals, default name).
         val baseWorkout = decoded.toDomain(
             originalFilename = originalFilename,
             contentHash = hash,
             importedAtEpochMs = System.currentTimeMillis(),
         )
 
-        // 6) Compute TSS from current threshold pace (may be null → "—").
+        // Compute TSS from current threshold pace (may be null → "—").
         val threshold = settings.settings.first().thresholdPaceSecPerKm
         val tss = TssCalculator.compute(baseWorkout, threshold)
         val withTss = baseWorkout.copy(tss = tss)
 
-        // 7) Persist (Mapper validation may throw → translate to Rejected).
+        // Persist (Mapper validation may throw → translate to Rejected).
         return try {
             when (val r = repository.upsert(withTss, bytes)) {
                 is WorkoutRepository.UpsertResult.NewImport -> Result.NewImport(r.workoutId)

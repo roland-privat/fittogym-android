@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.runtraining.ui.complete.CompleteScreen
 import com.example.runtraining.ui.details.DetailsScreen
+import com.example.runtraining.ui.onboarding.OnboardingScreen
 import com.example.runtraining.ui.options.OptionsScreen
 import com.example.runtraining.ui.run.RunScreen
 import com.example.runtraining.ui.screens.HistoryDetailScreen
@@ -52,6 +53,13 @@ fun AppNavHost(
         navController = navController,
         startDestination = startDestination,
     ) {
+        composable(Routes.ONBOARDING) {
+            OnboardingScreen(onFinish = {
+                navController.navigate(Routes.SELECTION) {
+                    popUpTo(Routes.ONBOARDING) { inclusive = true }
+                }
+            })
+        }
         composable(Routes.SELECTION) {
             SelectionScreen(
                 onTapWorkout = { id -> navController.navigate(Routes.run(id)) },

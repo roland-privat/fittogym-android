@@ -289,3 +289,45 @@ This is a personal app per Constitution §I; "parallel team strategy" doesn't ap
 - Tests (T037, T038, T040, T059) are JVM-only unit tests against pure logic. They are **not** TDD-first; they are authored alongside or after the implementation file they cover. Their purpose is regression safety for the four most algorithmic parts of the codebase.
 - Manual-test recipes (Recipes A/B/C/D from [quickstart.md §3](quickstart.md)) are the canonical verification gate per Constitution §V. Failed-recipe = release blocker.
 - Commit after each task (or each logical cluster of [P] tasks) using descriptive intent-driven messages.
+
+---
+
+## Increment — Tester-feedback requirements (FR-040 / FR-041 / FR-042)
+
+Additive to the completed T001–T098 above. Turns the Session 2026-09-16 clarifications and the plan increment ([plan.md](plan.md) "Increment") into tasks. The offline guarantee (FR-006 / FR-034) MUST be preserved throughout.
+
+**Independent test**: On a release build — the Options "Rate app" row opens the Play in-app review card (or the Play listing when unavailable); a "Help & privacy" screen renders fully offline (airplane mode); TalkBack announces every control on every screen; and the merged manifest declares no `INTERNET`.
+
+### Phase A — Setup (dependency)
+
+- [ ] T099 [P] Add Play In-App Review to [gradle/libs.versions.toml](gradle/libs.versions.toml): a `playReview` version and a `play-review` library alias for `com.google.android.play:review-ktx`.
+- [ ] T100 Add `implementation(libs.play.review)` to the dependencies block of [app/build.gradle.kts](app/build.gradle.kts). (Depends on T099.)
+
+### Phase B — FR-040 Rate app
+
+- [ ] T101 [P] Create [app/src/main/kotlin/com/example/runtraining/util/RateApp.kt](app/src/main/kotlin/com/example/runtraining/util/RateApp.kt): `fun launchRateFlow(activity: Activity)` that runs `ReviewManagerFactory.create(...).requestReviewFlow()` → `launchReviewFlow(...)`, and on any failure falls back to an `ACTION_VIEW` intent for `market://details?id=com.fittogym.runtraining` (then the `https://play.google.com/store/apps/details?id=…` URL).
+- [ ] T102 Add a "Rate app" row to [OptionsScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/options/OptionsScreen.kt) that resolves the host `Activity` from `LocalContext` and calls `launchRateFlow(activity)`. (Depends on T100, T101.)
+
+### Phase C — FR-041 Help/FAQ + Privacy
+
+- [ ] T103 Add a `HELP` constant to [Routes.kt](app/src/main/kotlin/com/example/runtraining/nav/Routes.kt) and register `composable(Routes.HELP) { HelpScreen(onBack = { navController.popBackStack() }) }` in [AppNavHost.kt](app/src/main/kotlin/com/example/runtraining/nav/AppNavHost.kt).
+- [ ] T104 [P] Create [app/src/main/kotlin/com/example/runtraining/ui/help/HelpScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/help/HelpScreen.kt): a scrollable, static Compose screen with a short FAQ (import a .fit, threshold pace, step beeps, HR pairing, mini view, why offline) and a privacy summary ported from [docs/privacy-policy.md](docs/privacy-policy.md). No network.
+- [ ] T105 Add a "Help & privacy" row to [OptionsScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/options/OptionsScreen.kt) that navigates to `Routes.HELP`. (Same file as T102 — sequence after it; depends on T103.)
+
+### Phase D — FR-042 Accessibility (cross-cutting)
+
+- [ ] T106 [P] Add `contentDescription` / `semantics` to the icon-only controls in [SelectionScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/selection/SelectionScreen.kt) — History, Options, the `+` import FAB — plus a `stateDescription` on the selected sort chip.
+- [ ] T107 [P] Add `contentDescription` / `semantics` to the controls in [RunScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/run/RunScreen.kt) — Back, the mini-view toggle, and any icon-only transport controls — including a running/paused `stateDescription`.
+- [ ] T108 [P] Add `contentDescription` / `semantics` to the mini-view overlay content and the icon actions in [HistoryScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/screens/HistoryScreen.kt) and [HistoryDetailScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/screens/HistoryDetailScreen.kt).
+
+### Phase E — Validation
+
+- [ ] T109 Manual test + recipe: enable TalkBack and confirm every control on Splash / Onboarding / Selection / Details / Run / Options / History / Help is announced; add a "Recipe E — Accessibility" row to [quickstart.md](quickstart.md).
+- [ ] T110 Manual test: on a release build, the "Rate app" row shows the in-app review card (and falls back to the Play listing when Play is unavailable); the Help/Privacy screen renders fully in airplane mode.
+- [ ] T111 Guardrail check: run `./gradlew :app:assembleRelease`, then inspect the merged manifest under `app/build/intermediates/merged_manifest/release/` to confirm the Play Review dependency introduced **no** `INTERNET` permission (FR-034).
+
+### Dependencies & parallelism (increment)
+
+- Order: **A → (B and C in parallel) → D → E**. Within A, T099 before T100.
+- Parallelizable [P] (distinct files): T099, T101, T104, T106, T107, T108. T102 and T105 both edit `OptionsScreen.kt` — sequence them.
+- Increment MVP = Phase A + B (Rate app). Phases C and D are independent and may ship separately.

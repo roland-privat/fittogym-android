@@ -10,6 +10,7 @@ object Routes {
     const val DETAILS = "details/{workoutId}"
     const val RUN = "run/{workoutId}"
     const val OPTIONS = "options"
+    const val HELP = "help"
     const val COMPLETE = "complete/{workoutId}?stoppedEarly={stoppedEarly}"
     const val HISTORY = "history"
     const val HISTORY_DETAIL = "history/detail/{resultId}"

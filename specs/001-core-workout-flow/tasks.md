@@ -315,31 +315,31 @@ Additive to the completed T001–T098 above. Turns the Session 2026-09-16 clarif
 
 ### Phase A — Setup (dependency)
 
-- [ ] T099 [P] Add Play In-App Review to [gradle/libs.versions.toml](gradle/libs.versions.toml): a `playReview` version and a `play-review` library alias for `com.google.android.play:review-ktx`.
-- [ ] T100 Add `implementation(libs.play.review)` to the dependencies block of [app/build.gradle.kts](app/build.gradle.kts). (Depends on T099.)
+- [X] T099 [P] Add Play In-App Review to [gradle/libs.versions.toml](gradle/libs.versions.toml): a `playReview` version and a `play-review` library alias for `com.google.android.play:review-ktx`.
+- [X] T100 Add `implementation(libs.play.review)` to the dependencies block of [app/build.gradle.kts](app/build.gradle.kts). (Depends on T099.)
 
 ### Phase B — FR-040 Rate app
 
-- [ ] T101 [P] Create [app/src/main/kotlin/com/example/runtraining/util/RateApp.kt](app/src/main/kotlin/com/example/runtraining/util/RateApp.kt): `fun launchRateFlow(activity: Activity)` that runs `ReviewManagerFactory.create(...).requestReviewFlow()` → `launchReviewFlow(...)`, and on any failure falls back to an `ACTION_VIEW` intent for `market://details?id=com.fittogym.runtraining` (then the `https://play.google.com/store/apps/details?id=…` URL).
-- [ ] T102 Add a "Rate app" row to [OptionsScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/options/OptionsScreen.kt) that resolves the host `Activity` from `LocalContext` and calls `launchRateFlow(activity)`. (Depends on T100, T101.)
+- [X] T101 [P] Create [app/src/main/kotlin/com/example/runtraining/util/RateApp.kt](app/src/main/kotlin/com/example/runtraining/util/RateApp.kt): `fun launchRateFlow(activity: Activity)` that runs `ReviewManagerFactory.create(...).requestReviewFlow()` → `launchReviewFlow(...)`, and on any failure falls back to an `ACTION_VIEW` intent for `market://details?id=com.fittogym.runtraining` (then the `https://play.google.com/store/apps/details?id=…` URL).
+- [X] T102 Add a "Rate app" row to [OptionsScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/options/OptionsScreen.kt) that resolves the host `Activity` from `LocalContext` and calls `launchRateFlow(activity)`. (Depends on T100, T101.)
 
 ### Phase C — FR-041 Help/FAQ + Privacy
 
-- [ ] T103 Add a `HELP` constant to [Routes.kt](app/src/main/kotlin/com/example/runtraining/nav/Routes.kt) and register `composable(Routes.HELP) { HelpScreen(onBack = { navController.popBackStack() }) }` in [AppNavHost.kt](app/src/main/kotlin/com/example/runtraining/nav/AppNavHost.kt).
-- [ ] T104 [P] Create [app/src/main/kotlin/com/example/runtraining/ui/help/HelpScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/help/HelpScreen.kt): a scrollable, static Compose screen with a short FAQ (import a .fit, threshold pace, step beeps, HR pairing, mini view, why offline) and a privacy summary ported from [docs/privacy-policy.md](docs/privacy-policy.md). No network.
-- [ ] T105 Add a "Help & privacy" row to [OptionsScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/options/OptionsScreen.kt) that navigates to `Routes.HELP`. (Same file as T102 — sequence after it; depends on T103.)
+- [X] T103 Add a `HELP` constant to [Routes.kt](app/src/main/kotlin/com/example/runtraining/nav/Routes.kt) and register `composable(Routes.HELP) { HelpScreen(onBack = { navController.popBackStack() }) }` in [AppNavHost.kt](app/src/main/kotlin/com/example/runtraining/nav/AppNavHost.kt).
+- [X] T104 [P] Create [app/src/main/kotlin/com/example/runtraining/ui/help/HelpScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/help/HelpScreen.kt): a scrollable, static Compose screen with a short FAQ (import a .fit, threshold pace, step beeps, HR pairing, mini view, why offline) and a privacy summary ported from [docs/privacy-policy.md](docs/privacy-policy.md). No network.
+- [X] T105 Add a "Help & privacy" row to [OptionsScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/options/OptionsScreen.kt) that navigates to `Routes.HELP`. (Same file as T102 — sequence after it; depends on T103.)
 
 ### Phase D — FR-042 Accessibility (cross-cutting)
 
-- [ ] T106 [P] Add `contentDescription` / `semantics` to the icon-only controls in [SelectionScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/selection/SelectionScreen.kt) — History, Options, the `+` import FAB — plus a `stateDescription` on the selected sort chip.
-- [ ] T107 [P] Add `contentDescription` / `semantics` to the controls in [RunScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/run/RunScreen.kt) — Back, the mini-view toggle, and any icon-only transport controls — including a running/paused `stateDescription`.
-- [ ] T108 [P] Add `contentDescription` / `semantics` to the mini-view overlay content and the icon actions in [HistoryScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/screens/HistoryScreen.kt) and [HistoryDetailScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/screens/HistoryDetailScreen.kt).
+- [X] T106 [P] Add `contentDescription` / `semantics` to the icon-only controls in [SelectionScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/selection/SelectionScreen.kt) — History, Options, the `+` import FAB — plus a `stateDescription` on the selected sort chip.
+- [X] T107 [P] Add `contentDescription` / `semantics` to the controls in [RunScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/run/RunScreen.kt) — Back, the mini-view toggle, and any icon-only transport controls — including a running/paused `stateDescription`.
+- [X] T108 [P] Add `contentDescription` / `semantics` to the mini-view overlay content and the icon actions in [HistoryScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/screens/HistoryScreen.kt) and [HistoryDetailScreen.kt](app/src/main/kotlin/com/example/runtraining/ui/screens/HistoryDetailScreen.kt).
 
 ### Phase E — Validation
 
-- [ ] T109 Manual test + recipe: enable TalkBack and confirm every control on Splash / Onboarding / Selection / Details / Run / Options / History / Help is announced; add a "Recipe E — Accessibility" row to [quickstart.md](quickstart.md).
+- [X] T109 Manual test + recipe: enable TalkBack and confirm every control on Splash / Onboarding / Selection / Details / Run / Options / History / Help is announced; add a "Recipe E — Accessibility" row to [quickstart.md](quickstart.md).
 - [ ] T110 Manual test: on a release build, the "Rate app" row shows the in-app review card (and falls back to the Play listing when Play is unavailable); the Help/Privacy screen renders fully in airplane mode.
-- [ ] T111 Guardrail check: run `./gradlew :app:assembleRelease`, then inspect the merged manifest under `app/build/intermediates/merged_manifest/release/` to confirm the Play Review dependency introduced **no** `INTERNET` permission (FR-034).
+- [X] T111 Guardrail check: run `./gradlew :app:assembleRelease`, then inspect the merged manifest under `app/build/intermediates/merged_manifest/release/` to confirm the Play Review dependency introduced **no** `INTERNET` permission (FR-034).
 
 ### Dependencies & parallelism (increment)
 

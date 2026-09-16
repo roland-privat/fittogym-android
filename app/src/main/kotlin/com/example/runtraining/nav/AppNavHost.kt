@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.runtraining.ui.complete.CompleteScreen
 import com.example.runtraining.ui.details.DetailsScreen
+import com.example.runtraining.ui.help.HelpScreen
 import com.example.runtraining.ui.onboarding.OnboardingScreen
 import com.example.runtraining.ui.options.OptionsScreen
 import com.example.runtraining.ui.run.RunScreen
@@ -101,7 +102,13 @@ fun AppNavHost(
             )
         }
         composable(Routes.OPTIONS) {
-            OptionsScreen(onBack = { navController.popBackStack() })
+            OptionsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenHelp = { navController.navigate(Routes.HELP) },
+            )
+        }
+        composable(Routes.HELP) {
+            HelpScreen(onBack = { navController.popBackStack() })
         }
         composable(
             route = Routes.COMPLETE,

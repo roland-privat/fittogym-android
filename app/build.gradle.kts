@@ -143,6 +143,15 @@ dependencies {
     // FIT decoder (Maven Central — Garmin Java SDK)
     implementation(libs.fit)
 
+    // Play In-App Review (FR-040). Brokered by the Play Store app; adds no INTERNET permission.
+    implementation(libs.play.review)
+
+    // Play Review transitively pulls an old androidx.fragment; bump it so
+    // registerForActivityResult passes lintVital (InvalidFragmentVersionForActivityResult).
+    constraints {
+        implementation("androidx.fragment:fragment:1.8.5")
+    }
+
     // Tests (JVM unit tests in app/src/test/, optional per spec)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)

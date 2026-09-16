@@ -19,6 +19,9 @@ coreKtx = "1.15.0"
 # Domain
 fit = "21.205.0"               # Garmin FIT Java SDK via Maven Central (com.garmin:fit)
 
+# Play (in-app review; brokered by the Play Store app — adds no INTERNET permission)
+playReview = "2.0.2"
+
 # Test
 junit = "4.13.2"
 
@@ -51,6 +54,9 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 
 # FIT decoder
 fit = { module = "com.garmin:fit", version.ref = "fit" }
+
+# Play in-app review
+play-review = { module = "com.google.android.play:review-ktx", version.ref = "playReview" }
 
 # Test
 junit = { module = "junit:junit", version.ref = "junit" }

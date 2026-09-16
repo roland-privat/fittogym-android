@@ -52,11 +52,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.runtraining.ble.HrmClient
+import com.example.runtraining.util.launchRateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OptionsScreen(
     onBack: () -> Unit,
+    onOpenHelp: () -> Unit,
     viewModel: OptionsViewModel = viewModel(factory = OptionsViewModel.Factory),
 ) {
     val settings by viewModel.state.collectAsState()
@@ -67,6 +69,7 @@ fun OptionsScreen(
     var confirmOutOfRange by remember { mutableStateOf<Int?>(null) }
     var permissionDenied by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val activity = context as? android.app.Activity
 
     val btPermissions = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -278,6 +281,23 @@ fun OptionsScreen(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "About",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { activity?.let { launchRateFlow(it) } },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Rate app") }
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onOpenHelp,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Help & privacy") }
+
             Box(modifier = Modifier.height(32.dp))
         }
     }

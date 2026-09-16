@@ -192,6 +192,15 @@ an HRM may or may not be connected.
 | D3 | Re-open Training Details for the imported workout. | TSS shows a numeric value > 0 within ~1 s; the value is stable across re-opens and across app cold-restarts. |
 | D4 | Options → Threshold pace → clear → Save. | Returns to "Unset". Training Details TSS goes back to `—`. |
 
+### Recipe E — Accessibility, Rate app & Help/Privacy (FR-040 / FR-041 / FR-042)
+
+| # | Step | Expected |
+|---|---|---|
+| E1 | Enable TalkBack (Settings → Accessibility). Swipe through Selection, Details, Run, Options, History, and Help. | Every control (History / Options / `+` FAB, Back, the Start/Pause/Stop/Step + mini-view buttons, list rows, sort chips) is announced with a meaningful label; nothing is an unlabeled "button". Decorative logo art is skipped. |
+| E2 | Options → **Rate app**. | On a Play-track install: the in-app review card appears. On a sideloaded build (Play doesn't recognise it): it falls back to opening the Play Store listing. Either way — no crash. |
+| E3 | Turn on **airplane mode**, then Options → **Help & privacy**. | The Help/FAQ + privacy screen renders fully offline and states the app has no internet access and keeps all data on-device. |
+| E4 | Build `assembleRelease`/`bundleRelease` and inspect the merged manifest. | No `android.permission.INTERNET` is present (the Play Review library adds none). |
+
 ## 4. Regression policy
 
 - Before merging any change that could plausibly affect the three flows

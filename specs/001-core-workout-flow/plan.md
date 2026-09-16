@@ -23,6 +23,8 @@ Technical approach pillars:
 
 ## Technical Context
 
+> **Superseded values (2026-09-16):** the app now builds on **AGP 8.13.2 / Gradle 8.13**, **targetSdk/compileSdk 36**, and the foreground service is type **`specialUse`** (subtype `personal_workout_timer`), not `health`. A signed **`release` variant + Google Play (closed testing)** is in use, permitted by constitution v2.0.0 (§IV / Distribution). The original values below are kept for historical context.
+
 **Language/Version**: Kotlin 2.0.x (stable for AGP 8.7+); Java toolchain 17 (required by AGP 8.x).
 
 **Primary Dependencies**:
@@ -67,7 +69,7 @@ Technical approach pillars:
 **Constraints**:
 
 - Offline-only. Manifest MUST NOT declare `INTERNET` (Spec FR-034).
-- No Play Store, no `release` build type, no ProGuard/R8 release rules, no signing config beyond Android's default debug keystore (Constitution §IV).
+- A signed `release` build type + Google Play (closed testing) is now used, permitted by constitution v2.0.0 (§IV / Distribution): signing material lives in a gitignored `keystore.properties`, the release variant falls back to the debug keystore when it's absent, and R8 + resource-shrinking rules are committed. The clean-clone `gradlew installDebug` path still needs no secrets.
 - No GPS, no telephony, no microphone, no camera. Only Bluetooth + overlay + audio playback + foreground-service permissions.
 - VS Code terminal is the canonical build/deploy surface; the project MUST work without Android Studio installed.
 
@@ -87,7 +89,7 @@ Technical approach pillars:
 | I | Personal Single-User Scope | **Pass** | Zero account, auth, multi-profile, distribution-channel, or telemetry surface. App-private storage, single device. |
 | II | Local-First & Privacy by Default | **Pass** | No `INTERNET` permission declared. All FIT decoding, HR processing, TSS math is on-device. No Firebase/Crashlytics/Analytics. |
 | III | Simplicity & YAGNI | **Pass (with one justified library)** | One Gradle module, no DI framework, no repository/use-case layers. Three third-party libraries: (a) Compose BOM (single artifact dragging UI deps, unavoidable for the UI choice), (b) Room (replaces a hand-rolled JSON-file persistence layer with materially less code once steps + repeat-groups + indices are involved), (c) Garmin FIT SDK via Maven Central `com.garmin:fit` (a hand-rolled FIT parser would be substantially more code than the rest of the app combined; see [research.md](research.md) §FIT parser). No other third-party libs. |
-| IV | Reproducible Local Build & USB Deploy | **Pass** | `./gradlew installDebug` is the only deploy path. Gradle wrapper, `libs.versions.toml`, pinned SDK levels checked in. No release variant, no secrets, no signing config beyond default debug keystore. |
+| IV | Reproducible Local Build & USB Deploy | **Pass** | `./gradlew installDebug` is the clean-clone deploy path (no secrets). A signed `release` variant + Play (closed testing) is also used per constitution v2.0.0; keystore is gitignored, release falls back to the debug keystore when absent. Gradle wrapper, `libs.versions.toml`, pinned SDK levels checked in. |
 | V | Hardware Integration Honesty | **Pass** | Manual-test recipes for HRM, FIT share/open, immersive fullscreen + mini view + beeps are mandated by [quickstart.md](quickstart.md) (Phase 1 output). Graceful-degradation FRs (FR-033, US3 ASs 4–6, US4 ASs 6) are codified in the spec and traced into the run-session state machine. |
 
 No violations require a Complexity Tracking entry.
@@ -181,7 +183,7 @@ Re-evaluated after writing [research.md](research.md), [data-model.md](data-mode
 | I | Personal Single-User Scope | **Pass** | The intent-filter contract accepts files from a single device; no second-user surfaces (account, share-out, distribution channel) appear anywhere in the design. |
 | II | Local-First & Privacy by Default | **Pass** | Intent contract explicitly does **not** declare `INTERNET`. No outbound network calls anywhere in the design. The Garmin FIT SDK is a local-only decoder. HR processing and TSS math are pure on-device functions. |
 | III | Simplicity & YAGNI | **Pass** | Library list is closed at three (Compose BOM, Room, Garmin FIT JAR) — each justified in [research.md](research.md). No DI framework, no repository layer, no Clean Architecture split. The run-session FSM is one class behind one `StateFlow<RunUiState>`. |
-| IV | Reproducible Local Build & USB Deploy | **Pass** | [quickstart.md](quickstart.md) §1–2 lay out a Studio-free `./gradlew installDebug` flow that needs only JDK 17 + Android cmdline-tools + `ANDROID_HOME`. No release variant, no signing config, no R8 release rules. |
+| IV | Reproducible Local Build & USB Deploy | **Pass** | [quickstart.md](quickstart.md) §1–2 lay out a Studio-free `./gradlew installDebug` flow that needs only JDK 17 + Android cmdline-tools + `ANDROID_HOME`. A signed `release` variant + Play upload (`bundleRelease`) is additionally used per constitution v2.0.0; secrets stay in a gitignored `keystore.properties`. |
 | V | Hardware Integration Honesty | **Pass** | [quickstart.md](quickstart.md) §3 provides four manual-test recipes (FIT share/open, BLE HRM, immersive + beeps + mini view, TSS & threshold pace) covering every Spec graceful-degradation FR. The run-session state machine ([contracts/run-session-state-machine.md](contracts/run-session-state-machine.md)) makes each failure mode an explicit non-crashing transition. |
 
 Phase 2 planning (task generation) is **not** done here — it belongs to `/speckit.tasks`. This plan stops at the end of Phase 1.

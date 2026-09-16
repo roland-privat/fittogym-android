@@ -292,6 +292,21 @@ This is a personal app per Constitution §I; "parallel team strategy" doesn't ap
 
 ---
 
+## Delivered post-MVP — retroactively tracked (2026-09-10)
+
+Added to the spec in Session 2026-09-10 and shipped directly (commits `4dfcd56`, `e3b459b`, `c85878c`, `8f32665`, `d535c7b`) without task tracking. Recorded here for spec↔tasks traceability; all complete.
+
+- [X] TR01 [US5] FR-036–FR-039 — Workout history: persist a result on Stop and natural completion (performed TSS on stop), History list + result Detail (repeat/delete). Files: `persistence/WorkoutResultRepository.kt`, `persistence/db/WorkoutResultDao.kt`, `persistence/db/entities/WorkoutResultEntity.kt`, Room v3 migration + `app/schemas/.../3.json`, `ui/screens/HistoryScreen.kt`, `ui/screens/HistoryDetailScreen.kt`, `ui/complete/*`, `service/WorkoutForegroundService.kt`.
+- [X] TR02 FR-023d — Ongoing foreground-service notification only while running/paused; removed on stop/complete. Files: `service/WorkoutForegroundService.kt`, `service/NotificationBuilder.kt`.
+- [X] TR03 FR-019c — Back guard: running/paused Back routes to the Stop confirmation. File: `ui/run/RunScreen.kt`.
+- [X] TR04 [US6] FR-009a — First-run onboarding tour (threshold pace + display unit, skippable). Files: `ui/onboarding/OnboardingScreen.kt`, `ui/onboarding/OnboardingViewModel.kt`, routing in `MainActivity.kt`, `settings/AppSettings*.kt`.
+- [X] TR05 [US6] FR-009b — Bundled demo workouts seeded on first launch (idempotent). Files: `app/src/main/assets/demo-workouts/*.fit`, `RunTrainingApp.kt` (`seedDemoWorkoutsIfNeeded`), `workout/import/ImportWorkoutUseCase.kt` (`importBytes`).
+- [X] TR06 FR-035 — Branded splash on cold launch. Files: `ui/splash/SplashScreen.kt`, `ui/common/BrandMark.kt`, `MainActivity.kt`.
+- [X] TR07 FR-010a — Selection page branding + summary (workouts · weekly TSS · last run). Files: `ui/selection/SelectionScreen.kt`, `ui/selection/SelectionViewModel.kt`, `ui/common/BrandMark.kt`.
+- [X] TR08 FR-001a — In-app import via the system file picker (+ FAB). Files: `ui/selection/SelectionScreen.kt`, `ui/selection/SelectionViewModel.kt`, `workout/import/ImportWorkoutUseCase.kt`.
+
+---
+
 ## Increment — Tester-feedback requirements (FR-040 / FR-041 / FR-042)
 
 Additive to the completed T001–T098 above. Turns the Session 2026-09-16 clarifications and the plan increment ([plan.md](plan.md) "Increment") into tasks. The offline guarantee (FR-006 / FR-034) MUST be preserved throughout.

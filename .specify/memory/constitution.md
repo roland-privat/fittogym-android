@@ -1,6 +1,10 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+2.0.1 (2026-09-16, PATCH): removed "Play Store distribution" from Principle I's
+out-of-scope example list to align it with Principle IV / the Distribution
+section (no change to what is permitted or forbidden).
+
 Version change: 1.0.0 → 2.0.0
 Rationale: MAJOR — Play Store distribution is now permitted. Principle IV is
 relaxed to allow a release variant and Play upload; the Distribution section
@@ -39,10 +43,11 @@ The app exists to support exactly one user — the developer — on the develope
 Android device. It MUST NOT add user accounts, authentication flows, multi-profile
 data partitioning, role checks, or any infrastructure whose only purpose is to
 support additional users. Decisions optimize for "works for me on my phone." Anything
-that would only matter for a second user (Play Store distribution, account recovery,
-GDPR consent dialogs, server-side identity, A/B testing, crash-reporting opt-in
-dialogs) is explicitly out of scope and MUST be rejected during planning unless this
-constitution is amended first.
+that would only matter for a second user (account recovery, GDPR consent dialogs,
+server-side identity, A/B testing, crash-reporting opt-in dialogs) is explicitly out
+of scope and MUST be rejected during planning unless this constitution is amended
+first. (Play Store *distribution* itself is permitted per Principle IV — a published
+build is still a single-user app per install.)
 
 **Rationale**: This is a personal hobby app. Pretending otherwise adds large amounts
 of code, complexity, and review surface that delivers no value to the only user.
@@ -229,4 +234,4 @@ was rejected. The Hardware Integration Honesty manual-test recipes (Principle V)
 MUST be present before a feature touching HRM, FIT intents, or fullscreen is
 considered done.
 
-**Version**: 2.0.0 | **Ratified**: 2026-05-25 | **Last Amended**: 2026-05-27
+**Version**: 2.0.1 | **Ratified**: 2026-05-25 | **Last Amended**: 2026-09-16

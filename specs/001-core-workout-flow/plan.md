@@ -185,3 +185,61 @@ Re-evaluated after writing [research.md](research.md), [data-model.md](data-mode
 | V | Hardware Integration Honesty | **Pass** | [quickstart.md](quickstart.md) §3 provides four manual-test recipes (FIT share/open, BLE HRM, immersive + beeps + mini view, TSS & threshold pace) covering every Spec graceful-degradation FR. The run-session state machine ([contracts/run-session-state-machine.md](contracts/run-session-state-machine.md)) makes each failure mode an explicit non-crashing transition. |
 
 Phase 2 planning (task generation) is **not** done here — it belongs to `/speckit.tasks`. This plan stops at the end of Phase 1.
+
+---
+
+## Increment — Tester-feedback requirements (2026-09-16)
+
+**Scope**: Adds the three requirements introduced by the Session 2026-09-16 clarifications in [spec.md](spec.md): **FR-040** (in-app "Rate app"), **FR-041** (offline Help/FAQ + Privacy), **FR-042** (minimal TalkBack accessibility). The core feature above is already implemented; this increment is **additive** — it does not touch the run engine, import pipeline, or data model.
+
+### Summary
+
+Three small, offline-preserving additions surfaced by closed-testing feedback:
+
+- **FR-040 Rate app** — an Options row that launches the Google **Play In-App Review** flow, with a Play Store deep-link fallback. Uses `com.google.android.play:review-ktx`, which does **not** add the `INTERNET` permission (the Play Store app brokers the review), so FR-034 holds.
+- **FR-041 Help/FAQ + Privacy** — a static, on-device Help/FAQ + Privacy screen reachable from Options, reusing the wording already in `docs/privacy-policy.md`. No network, and no survey/feedback upload (excluded by the clarification).
+- **FR-042 Accessibility (minimal)** — content descriptions / semantics for every interactive control so the app is TalkBack-navigable. Dynamic font-scaling and WCAG AA contrast are explicitly **deferred**.
+
+### Technical Context (delta only)
+
+- **New dependency**: `com.google.android.play:review-ktx` (Play In-App Review) via `gradle/libs.versions.toml`. Post-merge manifest check MUST confirm it introduces no `INTERNET` or tracking permission.
+- **No new module, no new persistence, no new domain entities.** Help/Privacy content is static Compose (or a bundled asset).
+- Everything else unchanged from the core Technical Context (Kotlin 2.0.21, Compose, AGP 8.13.2 / Gradle 8.13, JDK 17, minSdk 31 / target 36).
+
+### Constitution / spec-guardrail check
+
+| Guardrail | Status | Notes |
+|---|---|---|
+| FR-034 — no `INTERNET` | **Pass (verify)** | Play In-App Review needs no `INTERNET` in the app manifest; confirm via the merged release manifest after adding the dependency. |
+| FR-006 — fully offline | **Pass** | Help/Privacy is static on-device; no survey/feedback upload (excluded per clarification). Rating is brokered by the Play Store app, not the app's own network. |
+| §III Simplicity/YAGNI | **Pass** | One new library (Play Review), one new screen, no new architecture layers. |
+| §II Privacy by default | **Pass** | No new data collected; the privacy screen restates the on-device-only guarantee. |
+
+### Design & approach
+
+**FR-040 Rate app**
+
+- Add `libs.play.review` to the version catalog + `implementation` in `app/build.gradle.kts`.
+- Options gains a "Rate app" row. On tap: `ReviewManagerFactory.create(context)` → `requestReviewFlow()` → `launchReviewFlow(activity, info)`; on any failure, fall back to an `ACTION_VIEW` intent to `market://details?id=com.fittogym.runtraining` (then `https://play.google.com/store/apps/details?id=…`).
+- Play caps how often the in-app card appears; the fallback deep-link guarantees the listing is always reachable. The post-workout prompt stays an optional future toggle (FR-040 "MAY").
+
+**FR-041 Help/FAQ + Privacy**
+
+- New route `Routes.HELP` + `HelpScreen` (static Compose): a short FAQ (import a .fit, set threshold pace, beeps, HR pairing, mini view, why offline) and a privacy summary ported from `docs/privacy-policy.md`.
+- Add a "Help & privacy" row in Options that navigates to it.
+
+**FR-042 Accessibility (TalkBack)**
+
+- Audit icon-only controls for `contentDescription`: Selection app bar (History, Options, the `+` FAB), Run page (Back, mini-view toggle, transport controls), History/Detail actions, and the mini-view overlay.
+- Add `Modifier.semantics { … }` (`contentDescription`, plus `stateDescription` where a control conveys state — e.g., selected sort chip, running/paused).
+- Verify with TalkBack on-device; add a manual-test recipe row to `quickstart.md`.
+
+### Task outline (for `/speckit.tasks`)
+
+1. Add Play In-App Review dependency (catalog + module); confirm the merged manifest still has **no** `INTERNET`.
+2. Options: "Rate app" row → in-app review flow + Play-listing fallback.
+3. `HelpScreen` + `Routes.HELP` + Options "Help & privacy" row; port privacy wording from `docs/privacy-policy.md`.
+4. Accessibility pass: content descriptions/semantics for all icon-only controls + the mini view.
+5. Manual-test recipe: TalkBack navigation of every screen; Rate flow (and the fallback when Play is unavailable); Help/Privacy renders offline.
+
+This increment stops at Phase 1 design; task breakdown belongs to `/speckit.tasks`.

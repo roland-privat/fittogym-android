@@ -19,6 +19,28 @@
 - Q: What should the workout-completion screen show? → A: On natural completion only (not on **Stop**), show a short summary card with the workout display name, planned-duration vs actual-elapsed time, average heart rate over the session **if** an HRM was connected for at least half of the workout, and the workout’s planned TSS. A single **Done** affordance (or tap anywhere) returns to the training selection page. Pressing **Stop** before natural completion does **not** show this card and behaves exactly as FR-022 (immediate return to selection page).
 - Q: What additional per-step identifiers should the main (large) workout run page show? → A: In addition to the live metrics already in FR-017, the workout run page MUST also continuously display (a) the **step number** in the form `step n of N` (where `N` is the total number of steps in the workout after repeat expansion is *not* applied — i.e., `N` counts each authored step once, not each repeat iteration), (b) the **step name** taken from the FIT workout-step name field (or `—` if the step has no name), and (c) the **intensity class** (warmup / active / rest / cooldown / other). These are explicitly part of the *large* workout run page only; the mini view (FR-030) is unchanged. The repeat-lap counter `n of N` from FR-018 remains separate and is only shown for steps inside a repeat block.
 
+### Session 2026-09-10 — Scope update (post-implementation)
+
+The following capabilities were added or changed after the original draft and are now part of this feature. See the referenced requirements for detail.
+
+- **Change**: Stop now shows the completion summary too (marked "ended early"), not only natural completion. Both Stop and natural completion persist a lightweight session result to a new local **workout history**. (FR-022, FR-022a, FR-036)
+- **Change**: For a stopped-early session, the summary and history reflect the **actual performed TSS** (planned TSS kept for reference), not the planned TSS. (FR-039)
+- **Added**: A local **workout history** with its own page (completed + stopped sessions, newest-first, all shown) and a result-detail page that can re-run the workout (or explain if it was deleted) and delete result(s). (FR-037, FR-038)
+- **Added**: **In-app import** — the selection page has a `+` action that opens the system file picker and imports a `.fit` through the existing pipeline, alongside share/open intents. (FR-001a)
+- **Added**: A one-time **first-run onboarding tour** that collects threshold pace and display unit. (FR-009a)
+- **Added**: **Bundled demo workouts** seeded into the library on first launch. (FR-009b)
+- **Added**: A branded **splash screen** (~2 s) on cold launch — logo, name "FitToGym", tagline. (FR-035)
+- **Added**: The selection page carries **brand identity** (logo + "FitToGym") and a one-line summary (workout count, weekly TSS, last run). (FR-010a)
+- **Change**: **Back** while running/paused prompts to stop rather than silently leaving. (FR-019c)
+- **Added**: An **ongoing foreground-service notification** that exists only while a workout is running/paused and is removed on stop/complete. (FR-023d)
+- **Change**: The app is now distributed via **Google Play (closed testing)** — a departure from the original "no Play Store" assumption. It still declares no `INTERNET` permission and sends no data off-device. (Assumptions)
+
+### Session 2026-09-16
+
+- Q: Which tester-suggested growth features (Rate button, FAQ, in-app survey) are in scope given the offline / no-INTERNET principle (FR-006, FR-034)? → A: Only network-free ones — an in-app "Rate app" (Play in-app review / store deep link, no INTERNET) and an offline FAQ/Help + Privacy screen in Options; exclude any data-sending survey. (FR-040, FR-041)
+- Q: How much accessibility should the spec require now? → A: Minimal for this version — all interactive controls MUST have content descriptions/labels (TalkBack-navigable); dynamic font scaling and WCAG AA contrast are deferred to a later version. (FR-042)
+- Q: Should first-use interactive tips (coach marks) be required in addition to the onboarding tour? → A: No — keep the current linear onboarding tour only; contextual coach marks are a future enhancement, out of scope for this version. (FR-009a)
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Import a workout from a shared/opened FIT file (Priority: P1)
@@ -102,6 +124,38 @@ While a workout is running, the user can enable a **mini view** — a small floa
 
 ---
 
+### User Story 5 - Review workout history (Priority: P2)
+
+After running workouts, the user can open a **history** page from the training selection page to review past sessions (completed and stopped), see each session's summary, re-run a workout, or delete records.
+
+**Why this priority**: Adds lasting value (a training log) on top of the core flow, but the app is fully usable without it.
+
+**Independent Test**: Complete or stop at least one workout. Open History from the selection page. The session MUST appear (newest-first). Open it: the summary MUST show planned vs actual duration, average HR (if an HRM was used), and the session TSS. From the detail, "Repeat" MUST open the run page for the original workout (or explain if it was deleted); "Delete" MUST remove the record.
+
+**Acceptance Scenarios**:
+
+1. **Given** a workout was stopped early, **When** the user opens History, **Then** the stopped session appears with an "ended early" indicator and its performed TSS.
+2. **Given** a workout completed naturally, **When** the user opens its history detail, **Then** the summary matches the completion card (planned vs actual duration, avg HR if applicable, planned TSS).
+3. **Given** a history entry whose source workout was later deleted, **When** the user taps "Repeat", **Then** the app shows a clear "no longer available" message instead of navigating or crashing.
+
+---
+
+### User Story 6 - First-run onboarding and demo workouts (Priority: P2)
+
+On first launch, a new user is greeted by a short onboarding tour that collects their threshold pace and preferred display unit, and finds the library already populated with a few bundled demo workouts so they can try the app immediately.
+
+**Why this priority**: Improves the first-run experience and makes the app usable without any import, but returning users never see it.
+
+**Independent Test**: On a fresh install (or after clearing app data), launch the app. A branded splash MUST show briefly, then the onboarding tour MUST appear and collect threshold pace + display unit. On finishing, the training selection page MUST show the bundled demo workouts. Relaunching MUST go straight to the selection page (no tour).
+
+**Acceptance Scenarios**:
+
+1. **Given** a fresh install, **When** the app is launched cold, **Then** a ~2 s branded splash is shown, followed by the onboarding tour.
+2. **Given** the onboarding tour, **When** the user sets a threshold pace and unit and finishes, **Then** those settings persist, the demo workouts show computed TSS, and onboarding is not shown on subsequent launches.
+3. **Given** onboarding has been completed, **When** the app is relaunched, **Then** it goes directly to the training selection page.
+
+---
+
 ### Edge Cases
 
 - **Shared file is not a valid FIT workout** (random binary, truncated, wrong sport type, recorded activity instead of planned workout): import MUST fail with a clear visible error and the file MUST NOT enter app storage. The app MUST NOT crash.
@@ -114,6 +168,7 @@ While a workout is running, the user can enable a **mini view** — a small floa
 - **HRM connected but workout not started**: the HR value still shows on the workout run page (idle state).
 - **Mini view overlay collides with the system keyboard** in another app: the overlay MAY be repositioned but MUST NOT block keyboard input from the underlying app.
 - **Workout with zero steps** or with only "open" steps: the workout is still importable but cannot be run; the run button MUST be disabled with a tooltip explanation.
+- **Repeat a history entry whose source workout was deleted**: the history result-detail MUST tell the user the workout is no longer available rather than navigate to a missing run page or crash.
 
 ## Requirements
 
@@ -122,6 +177,7 @@ While a workout is running, the user can enable a **mini view** — a small floa
 **Import & storage**
 
 - **FR-001**: The app MUST register itself as a receiver for Android `ACTION_SEND` and `ACTION_VIEW` intents carrying `.fit` files (and the corresponding MIME types where browsers/file pickers use them).
+- **FR-001a**: The training selection page MUST provide an in-app **import** action (a `+` affordance) that opens the Android system document picker and imports the chosen `.fit` file through the same pipeline as the share/open intents (dedupe, validation, TSS). A successful import opens the workout's details page; an invalid file surfaces a non-crashing error. This complements (does not replace) the intent-based import (FR-001) so the app no longer depends on another app to open a file.
 - **FR-002**: When the app is invoked via a file intent with a `.fit` payload, it MUST copy the file's bytes into app-private storage before any further processing and MUST NOT rely on the source `Uri` after the initial read.
 - **FR-003**: The app MUST detect duplicate imports by content hash and MUST NOT create duplicate library entries; opening a duplicate MUST resolve to the existing workout's details page with a clear "already imported" indication.
 - **FR-004**: For each imported workout the app MUST persist, at a minimum: a stable internal ID, the original filename, the user-editable display name (initially derived from the filename without extension), the import timestamp, the computed overall planned duration, the computed overall planned distance, and the computed TSS (or an explicit "unknown" marker when not computable).
@@ -134,11 +190,15 @@ While a workout is running, the user can enable a **mini view** — a small floa
 - **FR-007**: When launched from a `.fit` file intent for a workout not yet in app storage, the app MUST open directly on the training details page for the freshly imported workout.
 - **FR-008**: When launched from a `.fit` file intent for a workout that already exists in app storage (duplicate by hash), the app MUST open the training details page of the existing workout.
 - **FR-009**: When launched without a file intent (cold start from the launcher), the app MUST open the training selection page.
+- **FR-009a**: On the first launch after install (before onboarding has been completed) and with no file intent, the app MUST present a short **onboarding tour** that collects the user's threshold pace and target-intensity display unit, then marks onboarding complete so it is not shown again. The user MUST be able to skip it (settings then keep their defaults / unset). Completing or skipping routes to the training selection page. (Contextual first-use tips / coach marks are out of scope for this version.)
+- **FR-009b**: On first launch, the app MUST seed a small set of **bundled demo workouts** into app storage so the library is not empty for a new user. Seeding MUST run once (idempotent) and MUST be dedupe-safe against workouts the user imports.
+- **FR-035**: On cold launch, the app MUST show a branded full-screen **splash** for approximately two seconds (the app logo, the name "FitToGym", and a tagline) before the first screen. Launches triggered by a `.fit` file intent MAY skip the splash to reach the imported workout faster.
 
 **Training selection page**
 
 - **FR-010**: The training selection page MUST list every workout currently in app storage, sorted with the most recently imported first.
 - **FR-011**: Each row MUST display at minimum the display name, the overall planned duration, and the TSS (or "—" if unknown).
+- **FR-010a**: The training selection page MUST present the app's **brand identity** (the FitToGym logo mark and wordmark in place of a generic title) and a one-line **summary** of the user's training: the number of workouts in the library, the total performed TSS over the last 7 days, and how long ago the last session was (or "no runs yet").
 - **FR-012**: Tapping a row MUST open the workout run page for that workout, **except** when the workout is not runnable (zero authored steps, or all steps effectively “open” per FR-004a) — in that case the tap MUST surface a visible non-crashing explanation that the workout has no runnable steps and MUST NOT navigate to the workout run page (per the Edge Case “Workout with zero steps or with only ‘open’ steps”). Long-press or a row affordance SHOULD allow opening the training details page (read/edit) and deleting the workout from app storage.
 - **FR-013**: The training selection page MUST provide visible entry points to an **Options** screen that contains at minimum the "Connect HR monitor" action (FR-024), the threshold-pace setting used for TSS computation (referenced in Assumptions), and the **target-intensity display unit** toggle (pace vs speed, FR-013a).
 - **FR-013a**: The Options screen MUST expose a single user-selectable target-intensity display unit with two values: **pace** (formatted as `min:ss/km`, default) and **speed** (formatted as `km/h`). The selected unit MUST apply to every place a target is shown to the user — current and next target on the workout run page, current and next target on the mini view, and target column on the training details page. Underlying workout storage MUST remain in pace (seconds per km) regardless of display setting; the unit conversion is presentation-only.
@@ -160,10 +220,11 @@ While a workout is running, the user can enable a **mini view** — a small floa
 - **FR-019**: The workout run page MUST provide **Start**, **Pause**, **Stop**, **Step Forward**, and **Step Backward** controls whose enabled/disabled states match the current run state (idle, running, paused, complete) per FR-019a and FR-019b.
 - **FR-019a**: **Step Forward** MUST be available whenever the workout is **running** or **paused** and the current step is not the final step. Pressing it MUST end the current step immediately and start the next step from its beginning. Time accounting MUST follow normal step-transition logic (overall time elapsed and remaining recompute to reflect the early transition; the playhead jumps to the next step’s start; the countdown beeps for the skipped step are cancelled). If the current step is the final step, Step Forward MUST be disabled; reaching the end this way is equivalent to natural completion (Acceptance Scenario 8) and triggers the “workout complete” state.
 - **FR-019b**: **Step Backward** MUST be enabled **only** when the **most recent** step transition was caused by Step Forward (i.e., it is an explicit undo of a manual skip). It MUST NOT be available as free backward navigation. Pressing it MUST return the user to the previously skipped step at the position they left it (the time-elapsed value the skipped step had at the moment Step Forward was pressed). Any natural (timer-driven) step transition, any Step Backward press, or any Stop press MUST clear the “undoable” flag and disable Step Backward until a new Step Forward occurs.
+- **FR-019c**: While a workout is **running or paused**, any Back navigation (the system Back gesture/button and the workout run page's back affordance) MUST prompt the user to stop (the "End workout?" confirmation) rather than silently abandoning the session. Confirming stops the workout (per FR-022); dismissing keeps the user on the workout run page. When the workout has not been started (idle), Back leaves the page normally.
 - **FR-020**: While running, all displayed time counters MUST update at least once per second.
 - **FR-021**: Pause MUST freeze all time counters and the playhead; subsequent Start MUST resume them from their paused values with no skipped time.
-- **FR-022**: Stop MUST end the workout immediately and return the user to the training selection page; no recorded activity output is required in this version. The workout-completion summary card (FR-022a) is **not** shown on **Stop** — it is shown only on natural completion.
-- **FR-022a**: On natural completion of the final step (i.e., the last step’s timer reaches zero, **not** when the user presses Stop), the workout run page MUST present a workout-completion summary card showing all of the following: (a) the workout display name, (b) planned overall duration vs the actual elapsed session time (paused time excluded), (c) average heart rate over the session **if and only if** an HRM was connected and producing samples for at least 50% of the elapsed session time — otherwise omit the HR row, and (d) the workout’s already-computed planned TSS (or `—` if TSS is unknown per FR-004). The card MUST be dismissible by tapping a single **Done** affordance or anywhere on the card, after which the user returns to the training selection page. No new persistent data is created.
+- **FR-022**: Stop MUST end the workout immediately. It MUST persist a session result to the workout history (FR-036) and show the completion summary card (FR-022a) marked as "ended early", from which a single **Done** affordance (or tap) returns the user to the training selection page. (Earlier drafts returned to selection with no summary and no persisted data; that behavior is superseded.)
+- **FR-022a**: On **natural completion** of the final step **and** on **Stop**, the workout run page MUST present a workout-completion summary card showing: (a) the workout display name, (b) planned overall duration vs the actual elapsed session time (paused time excluded), (c) average heart rate over the session **if and only if** an HRM was connected and producing samples for at least 50% of the elapsed session time — otherwise omit the HR row, and (d) the session TSS — the **performed** TSS for a stopped-early session (FR-039), or the planned TSS on natural completion (or `—` if unknown per FR-004). A naturally completed session is presented as a success ("congratulations"); a stopped session is presented as "ended early". The card MUST be dismissible via a single **Done** affordance or by tapping the card, after which the user returns to the training selection page. A corresponding session result is persisted to the workout history (FR-036).
 - **FR-023**: While the workout run page is visible **and** a workout is running, the app MUST keep the screen on and present an immersive fullscreen layout (status bar and navigation bar hidden). On other screens (selection page, details page, options), normal screen behavior MUST apply.
 
 **Workout run page — audio cues**
@@ -171,6 +232,7 @@ While a workout is running, the user can enable a **mini view** — a small floa
 - **FR-023a**: While a workout is running (not paused, not idle, not complete), the app MUST emit exactly five short countdown beeps timed at one-per-second in the final five seconds of every step, so the last beep coincides (within ±100 ms) with the transition to the next step. No beeps are emitted when the workout is paused, when the current step has "open" duration, or after the final step ends.
 - **FR-023b**: The countdown beeps MUST cooperate with other audio (e.g., a music app the user is playing) by requesting transient audio focus for the duration of each beep and releasing it immediately; the beeps MUST NOT stop or permanently duck the user's music. No voice/TTS output and no separate vibration is required by this version.
 - **FR-023c**: The beeps MUST play even when the screen is off, when the app is backgrounded (e.g., mini view in use, music app foreground), and when the device is in silent ringer mode — i.e., they use the *media* audio stream so the workout's audible cues are tied to media volume, not ringer mute.
+- **FR-023d**: While a workout is **running or paused**, the app MUST run as a foreground service with an ongoing notification that shows the workout name and current step / time remaining and updates as steps change. The notification MUST exist only while the workout is active — it MUST NOT appear before **Start** and MUST be removed when the workout is stopped or completes. (During the run the immersive layout of FR-023 hides the status bar, so the notification is reached by pulling down the shade.)
 
 **Heart rate monitor**
 
@@ -192,14 +254,31 @@ While a workout is running, the user can enable a **mini view** — a small floa
 - **FR-033**: Every external-touchpoint feature (HRM, FIT parsing, overlay permission, file intent) MUST present a visible non-crashing state on its predictable failure modes (permission denied, Bluetooth off, no HRM, malformed FIT, oversized FIT, denied overlay permission, source `Uri` revoked).
 - **FR-034**: The app MUST never declare or use the `INTERNET` permission.
 
+**Workout history**
+
+- **FR-036**: On both **Stop** and **natural completion**, the app MUST persist a lightweight **session result** to a local workout history, including at least: the workout (id + a display-name snapshot), completion timestamp, planned vs actual duration, whether it was stopped early, average heart rate (if an HRM was connected), and the session's TSS. No `.fit` activity file is written. If the app is killed mid-workout, no result is persisted for that session.
+- **FR-037**: The app MUST provide a **workout history** page, reachable from the training selection page, listing all saved session results (completed and stopped) newest-first, with a sort toggle (newest/oldest). Stopped and completed sessions are both shown.
+- **FR-038**: Each history entry MUST open a **result detail** view showing the session summary, from which the user can (a) **repeat** the workout — navigating to the workout run page for the original workout, or a clear message if that workout has since been deleted — and (b) **delete** the result (individually and via multi-select).
+- **FR-039**: For a **stopped-early** session, the post-workout summary and history MUST reflect the **actual performed TSS** (computed from the elapsed/performed portion), with the workout's planned TSS available for reference; for a naturally completed session, performed and planned TSS coincide.
+
+**Growth & help (offline)**
+
+- **FR-040**: The Options screen MUST provide a **"Rate app"** action that launches the Google Play in-app review flow (falling back to opening the Play Store listing). This MUST NOT require the `INTERNET` permission — delivery is handled by the Play Store app — preserving FR-034. An optional, neutral, non-nagging rating prompt MAY additionally be offered after a workout completes.
+- **FR-041**: The app MUST provide in-app **Help/FAQ** and a **privacy summary** reachable from Options, rendered from static on-device content (no network). The privacy summary MUST restate that all workouts, settings, and heart-rate data stay on the device and that the app declares no `INTERNET` permission. The app MUST NOT include any in-app feedback/survey mechanism that transmits data off-device (this is intentionally excluded to preserve FR-006/FR-034).
+
+**Accessibility**
+
+- **FR-042**: All interactive controls (buttons, toggles, filter chips, list rows, and the mini view) MUST expose text labels or content descriptions so the app is navigable and operable with TalkBack. (Dynamic system font-scaling without clipping and WCAG AA text contrast are acknowledged but **deferred** to a later version.)
+
 ### Key Entities
 
-- **Workout**: A planned running workout imported from a `.fit` file. Attributes: stable internal ID, content hash, original filename, user-editable display name, import timestamp, overall planned duration, overall planned distance, computed TSS (or "unknown"), ordered list of steps.
+- **Workout**: A planned running workout imported from a `.fit` file. Attributes: stable internal ID, content hash, original filename, user-editable display name, import timestamp, overall planned duration, overall planned distance, computed TSS (or "unknown"), last-completed timestamp (or none, for the "last completed" sort), ordered list of steps.
 - **Step**: One segment of a workout. Attributes: 1-based ordinal index within the authored step list, optional name taken from the FIT workout-step name field, intensity class (warmup / active / rest / cooldown / other), duration (or "open"), distance target (or "open"), target pace range (lower–upper, or "open"), optional zone label, and (for steps inside a repeat) the repeat group it belongs to plus its position within that group.
 - **Repeat Group**: A bracket around two or more contiguous steps with a repeat count `N`. Drives the `n of N` lap counter on the workout run page.
 - **Run Session** (transient, in-memory only): The live state of a workout in progress — current step index, current repeat iteration, time elapsed in current step, time elapsed overall, run state (idle/running/paused/complete), and current heart rate sample. Not persisted across app process death in this version.
+- **Workout Session Result** (persisted): A saved record of one execution, created on Stop or natural completion (FR-036). Attributes: reference to the workout (id) plus a display-name snapshot, completion timestamp, planned vs actual duration, stopped-early flag, average heart rate (or none), and the session TSS (performed for a stopped session, planned on natural completion). Drives the workout history (FR-037/FR-038).
 - **HR Monitor Pairing**: Persisted pairing record: device identifier, last-known display name, last-connected timestamp.
-- **App Settings**: User-editable settings stored in app-private storage, including at minimum: (a) the **threshold pace** (in sec/km) used as the basis for TSS computation, and (b) the **target-intensity display unit** (`pace` | `speed`, default `pace`) per FR-013a. Used by the import flow (TSS) and by every UI surface that renders a target intensity.
+- **App Settings**: User-editable settings stored in app-private storage, including at minimum: (a) the **threshold pace** (in sec/km) used as the basis for TSS computation, and (b) the **target-intensity display unit** (`pace` | `speed`, default `pace`) per FR-013a, plus (c) internal first-run flags **onboarding-complete** (FR-009a) and **demos-seeded** (FR-009b). Used by the import flow (TSS), by every UI surface that renders a target intensity, and by the first-run routing.
 
 ## Success Criteria
 
@@ -221,7 +300,7 @@ While a workout is running, the user can enable a **mini view** — a small floa
 Project-wide defaults from the constitution that you can rely on without restating:
 
 - Single user (the developer) on a USB-connected Android phone.
-- No network, telemetry, accounts, or Play Store distribution.
+- No network, telemetry, or accounts; the app declares no `INTERNET` permission. (Distribution has since moved to Google Play closed testing — a change from the original "no Play Store" default — which required the `FOREGROUND_SERVICE_SPECIAL_USE` declaration and `targetSdk 36`. The no-network / no-data guarantees are unchanged. The project constitution's "no Play Store" principle is now out of date and should be revisited separately.)
 - Single Android Gradle module (`app/`), Kotlin + Jetpack Compose.
 - Manual test recipes are the canonical verification gate for HRM, FIT share/open intents, and fullscreen behavior.
 
@@ -233,8 +312,8 @@ Feature-specific assumptions (reasonable defaults adopted because the input did 
 - **TSS definition**: A running-style Training Stress Score computed deterministically from each step's planned duration and the midpoint of its target pace range relative to the user's threshold pace. Open-duration steps (and distance-based steps with no usable pace target, per FR-004a) contribute zero; distance-based steps that *do* have a usable pace target contribute via their effective duration (`distance / pace_midpoint`) just like any other time-based step. The exact formula is an implementation concern and is not part of this spec, but the result MUST be stable for the same input.
 - **Distance computation**: For time-based steps with a pace target, planned distance contribution = step duration × midpoint of pace range. Distance-based steps contribute their distance directly **and** their effective duration (= distance / pace midpoint) per FR-004a so the rest of the engine treats them as time-based. Open steps and distance-based steps with no usable pace contribute zero. The overall workout distance is the sum.
 - **Mini view trigger**: The mini view is opt-in via a toggle on the workout run page; it does not appear automatically when the user switches apps.
-- **Activity recording**: The app does not record an output activity file (no `.fit` write-back, no GPS track, no recorded HR stream). The workout run page is purely a guided execution view in this version.
+- **Activity recording**: The app does not record an output activity file (no `.fit` write-back, no GPS track, no recorded HR stream). The workout run page is a guided execution view; however, a lightweight per-session **result** (summary only) is now persisted to the workout history on Stop / natural completion (FR-036).
 - **HRM protocol**: Only Bluetooth LE broadcast/standard Heart Rate Service is in scope. ANT+ is out of scope for this version.
 - **Storage location**: All imported workouts and app settings live in app-private storage; they are removed if the user clears app data from Android settings, and that is acceptable.
 - **No workout resume after process death**: If the app is killed while a workout is running, on next launch the user lands on the training selection page; no auto-resume is required.
-- **Workout history**: Not in scope for this version. The training selection page lists available (importable/runnable) workouts only.
+- **Workout history**: In scope. The app persists a summary result for each completed/stopped session and exposes a separate history page with a result-detail view (FR-036–FR-039). The training selection page continues to list importable/runnable workouts; history is a distinct page.
